@@ -1,4 +1,3 @@
-# Autópsia Técnica: Projeto Aprende+
 **Documento de Referência para Engenharia e Arquitetura**
 
 Este documento serve como o "Porto Seguro" técnico para o projeto Aprende+. Ele detalha a infraestrutura, a filosofia de design, a anatomia dos componentes e o planejamento para evoluções futuras.
@@ -71,7 +70,7 @@ Se você ficar meses sem mexer, siga esta ordem para recuperar o contexto:
 ---
 
 ## 5. Preparação para o Supabase (Próximo Passo)
-
+supabase parece ser uma boa alternativa para o projeto em comparação aos outros
 ### 5.1. Onde Injetar a Camada de Serviço?
 Criaremos uma nova pasta: **`/src/services`**.
 *   **`supabaseClient.ts`**: Para configurar a conexão.
