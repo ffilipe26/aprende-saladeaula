@@ -1,3 +1,4 @@
+Documentação Técnica
 **Documento de Referência para Engenharia e Arquitetura**
 
 Este documento serve como o "Porto Seguro" técnico para o projeto Aprende+. Ele detalha a infraestrutura, a filosofia de design, a anatomia dos componentes e o planejamento para evoluções futuras.
