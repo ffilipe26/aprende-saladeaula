@@ -60,7 +60,7 @@ export default function Sidebar({ activeSection, setActiveSection, isCollapsed, 
           "transition-all duration-300 flex items-center justify-center overflow-hidden",
           isCollapsed ? "w-12 h-12 rounded-xl" : "w-14 h-14 rounded-2xl mr-2"
         )}>
-          <img src="/logo.png" alt="Aprende+" className="w-full h-full object-contain scale-125" referrerPolicy="no-referrer" />
+          <img src="/logoAprende.png" alt="Aprende+" className="w-full h-full object-contain scale-125" referrerPolicy="no-referrer" />
         </div>
         <AnimatePresence>
           {!isCollapsed && (
