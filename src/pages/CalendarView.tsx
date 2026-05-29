@@ -9,6 +9,7 @@ interface CalendarViewProps {
   onRemoveNotification: (id: string) => void;
   onMarkAsRead: (id: string) => void;
   onProfileClick: () => void;
+  isDarkMode: boolean;
 }
 
 const MONTHS = [
@@ -22,7 +23,8 @@ export default function CalendarView({
   notifications,
   onRemoveNotification,
   onMarkAsRead,
-  onProfileClick
+  onProfileClick,
+  isDarkMode
 }: CalendarViewProps) {
   // ==========================================
   // ESTADOS DO CALENDÁRIO
@@ -80,7 +82,7 @@ export default function CalendarView({
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-12">
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight font-display flex items-center gap-4">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight font-display flex items-center gap-4 text-[var(--text-main)]">
             Calendário Acadêmico
           </h1>
           <p className="text-[var(--text-muted)] mt-2">Acompanhe suas datas de entrega e eventos.</p>
@@ -88,7 +90,9 @@ export default function CalendarView({
       </div>
 
       {/* Grade do Calendário */}
-      <div className="glass border border-[var(--border)] rounded-3xl p-6 md:p-10 shadow-2xl">
+      <div className={`border rounded-3xl p-6 md:p-10 shadow-2xl transition-all duration-300 ${
+        isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200/80 shadow-md shadow-zinc-150/20'
+      }`}>
         {/* Controles do Mês */}
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl font-bold text-orange-500 font-display">
@@ -98,14 +102,18 @@ export default function CalendarView({
             <button 
               onClick={handlePrevMonth}
               disabled={year === 2026 && month === 0}
-              className="p-3 glass border border-[var(--border)] rounded-xl hover:bg-white/5 disabled:opacity-50 transition-all"
+              className={`p-3 border rounded-xl disabled:opacity-50 transition-all cursor-pointer ${
+                isDarkMode ? 'glass border-[var(--border)] hover:bg-white/5' : 'bg-slate-50 border-zinc-200 hover:bg-zinc-100 text-zinc-700'
+              }`}
             >
               <ChevronLeft size={20} />
             </button>
             <button 
               onClick={handleNextMonth}
               disabled={year === 2028 && month === 0}
-              className="p-3 glass border border-[var(--border)] rounded-xl hover:bg-white/5 disabled:opacity-50 transition-all"
+              className={`p-3 border rounded-xl disabled:opacity-50 transition-all cursor-pointer ${
+                isDarkMode ? 'glass border-[var(--border)] hover:bg-white/5' : 'bg-slate-50 border-zinc-200 hover:bg-zinc-100 text-zinc-700'
+              }`}
             >
               <ChevronRight size={20} />
             </button>
@@ -128,12 +136,14 @@ export default function CalendarView({
               key={idx} 
               className={`aspect-square rounded-2xl border flex flex-col items-center justify-center transition-all ${
                 day 
-                  ? 'border-[var(--border)] bg-white/5 hover:border-orange-500/30 cursor-pointer group' 
+                  ? (isDarkMode 
+                      ? 'border-[var(--border)] bg-white/5 hover:border-orange-500/30 cursor-pointer group' 
+                      : 'border-zinc-200 bg-slate-50/50 hover:border-orange-500/35 hover:bg-white cursor-pointer group shadow-sm')
                   : 'border-transparent'
               }`}
             >
               {day && (
-                <span className="text-lg font-bold group-hover:text-orange-500 transition-colors">
+                <span className="text-lg font-bold group-hover:text-orange-500 transition-colors text-[var(--text-main)]">
                   {day}
                 </span>
               )}

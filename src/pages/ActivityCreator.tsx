@@ -16,9 +16,10 @@ interface ActivityCreatorProps {
   onBack: () => void;
   onNavigate: (section: string) => void;
   onReload?: () => void;
+  isDarkMode: boolean;
 }
 
-export default function ActivityCreator({ currentUser, subjects, onBack, onNavigate, onReload }: ActivityCreatorProps) {
+export default function ActivityCreator({ currentUser, subjects, onBack, onNavigate, onReload, isDarkMode }: ActivityCreatorProps) {
   // Configurações Gerais da Atividade
   const [title, setTitle] = useState('');
   const [subjectId, setSubjectId] = useState('');
@@ -148,30 +149,34 @@ export default function ActivityCreator({ currentUser, subjects, onBack, onNavig
   // RENDERIZAÇÃO
   // ==========================================
   return (
-    <div className="flex-1 flex flex-col h-screen overflow-hidden bg-[var(--bg-body)] text-white relative">
-      <div className="flex items-center justify-between p-6 lg:px-12 border-b border-white/5 bg-black/20 backdrop-blur-md z-10 shrink-0">
+    <div className="flex-1 flex flex-col h-screen overflow-hidden bg-[var(--bg-body)] text-[var(--text-main)] relative">
+      <div className={`flex items-center justify-between p-6 lg:px-12 border-b z-10 shrink-0 backdrop-blur-md ${
+        isDarkMode ? 'border-white/5 bg-black/20' : 'border-zinc-200/80 bg-white/60'
+      }`}>
         <div className="flex items-center gap-4">
           <button 
             onClick={onBack}
-            className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+              isDarkMode ? 'bg-white/5 hover:bg-white/10 text-white' : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800'
+            }`}
           >
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-2xl font-black font-display tracking-tight">Criador de Atividades</h1>
-            <p className="text-xs text-zinc-400 font-medium">Elabore provas e exercícios com correção automática</p>
+            <h1 className={`text-2xl font-black font-display tracking-tight ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Criador de Atividades</h1>
+            <p className={`text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Elabore provas e exercícios com correção automática</p>
           </div>
         </div>
         
         <div className="flex items-center gap-4">
           <div className="hidden md:flex flex-col items-end mr-4">
-            <span className="text-xs text-zinc-500 font-bold uppercase tracking-widest">Total de Pontos</span>
-            <span className="text-2xl font-black text-orange-500">{totalPoints} <span className="text-sm text-zinc-500">pts</span></span>
+            <span className={`text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-zinc-550' : 'text-zinc-400'}`}>Total de Pontos</span>
+            <span className="text-2xl font-black text-orange-500">{totalPoints} <span className="text-sm text-zinc-550">pts</span></span>
           </div>
           <button 
             onClick={handleSave}
             disabled={isLoading}
-            className="sidebar-grad text-white px-8 py-3.5 rounded-2xl font-extrabold flex items-center gap-2 hover:shadow-lg hover:shadow-orange-600/30 transition-all disabled:opacity-50"
+            className="sidebar-grad text-white px-8 py-3.5 rounded-2xl font-extrabold flex items-center gap-2 hover:shadow-lg hover:shadow-orange-600/30 transition-all disabled:opacity-50 cursor-pointer"
           >
             <Save size={20} />
             {isLoading ? 'Salvando...' : 'Salvar e Publicar'}
@@ -195,36 +200,48 @@ export default function ActivityCreator({ currentUser, subjects, onBack, onNavig
           )}
 
           {/* Configurações Gerais */}
-          <div className="glass border border-white/5 rounded-[32px] p-8 md:p-10 space-y-8">
-            <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+          <div className={`border rounded-[32px] p-8 md:p-10 space-y-8 transition-all duration-300 ${
+            isDarkMode 
+              ? 'glass border-white/5 shadow-2xl' 
+              : 'bg-white border-zinc-200/80 shadow-xl shadow-zinc-200/40'
+          }`}>
+            <div className={`flex items-center gap-3 border-b pb-4 ${isDarkMode ? 'border-white/5' : 'border-zinc-200/80'}`}>
               <Settings2 className="text-orange-500" size={24} />
-              <h2 className="text-xl font-bold font-display">Configurações Gerais</h2>
+              <h2 className={`text-xl font-bold font-display ${isDarkMode ? 'text-white' : 'text-zinc-950'}`}>Configurações Gerais</h2>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Título da Atividade</label>
+                <label className={`text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-zinc-400' : 'text-zinc-550'}`}>Título da Atividade</label>
                 <input 
                   type="text" 
                   value={title}
                   onChange={e => setTitle(e.target.value)}
                   placeholder="Ex: Prova Final de Cálculo II"
-                  className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-orange-500 transition-colors font-bold text-lg"
+                  className={`w-full border rounded-2xl px-5 py-4 focus:outline-none focus:border-orange-500 transition-colors font-bold text-lg ${
+                    isDarkMode 
+                      ? 'bg-black/40 border-white/10 text-white placeholder:text-zinc-650' 
+                      : 'bg-slate-50 border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
+                  }`}
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Disciplina Alvo</label>
+                <label className={`text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-zinc-400' : 'text-zinc-550'}`}>Disciplina Alvo</label>
                 <div className="relative">
                   <BookOpen className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-500" size={20} />
                   <select 
                     value={subjectId}
                     onChange={e => setSubjectId(e.target.value)}
-                    className="w-full bg-black/40 border border-white/10 rounded-2xl pl-14 pr-5 py-4 text-white focus:outline-none focus:border-orange-500 transition-colors appearance-none font-bold"
+                    className={`w-full border rounded-2xl pl-14 pr-5 py-4 focus:outline-none focus:border-orange-500 transition-colors appearance-none font-bold ${
+                      isDarkMode 
+                        ? 'bg-black/40 border-white/10 text-white' 
+                        : 'bg-slate-50 border-zinc-200 text-zinc-900'
+                    }`}
                   >
-                    <option value="" className="bg-zinc-900">Selecione uma disciplina...</option>
+                    <option value="" className={isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}>Selecione uma disciplina...</option>
                     {subjects.map(s => (
-                      <option key={s.id} value={s.id} className="bg-zinc-900">{s.name} ({s.code})</option>
+                      <option key={s.id} value={s.id} className={isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}>{s.name} ({s.code})</option>
                     ))}
                   </select>
                 </div>
@@ -237,13 +254,17 @@ export default function ActivityCreator({ currentUser, subjects, onBack, onNavig
               />
 
               <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Instruções aos Alunos (Opcional)</label>
+                <label className={`text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-zinc-400' : 'text-zinc-550'}`}>Instruções aos Alunos (Opcional)</label>
                 <textarea 
                   value={instructions}
                   onChange={e => setInstructions(e.target.value)}
                   placeholder="Descreva as regras da prova, o que é permitido consultar, etc."
                   rows={3}
-                  className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-orange-500 transition-colors resize-none font-medium text-sm"
+                  className={`w-full border rounded-2xl px-5 py-4 focus:outline-none focus:border-orange-500 transition-colors resize-none font-medium text-sm ${
+                    isDarkMode 
+                      ? 'bg-black/40 border-white/10 text-white placeholder:text-zinc-650' 
+                      : 'bg-slate-50 border-zinc-200 text-zinc-900 placeholder:text-zinc-450'
+                  }`}
                 />
               </div>
             </div>
@@ -252,11 +273,11 @@ export default function ActivityCreator({ currentUser, subjects, onBack, onNavig
           {/* Construtor de Questões */}
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-black font-display flex items-center gap-3">
+              <h2 className={`text-2xl font-black font-display flex items-center gap-3 ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>
                 <Target className="text-orange-500" />
                 Questões da Atividade
               </h2>
-              <span className="text-zinc-400 font-bold text-sm">{questions.length} questões</span>
+              <span className={`font-bold text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{questions.length} questões</span>
             </div>
 
             <AnimatePresence>
@@ -266,11 +287,15 @@ export default function ActivityCreator({ currentUser, subjects, onBack, onNavig
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="glass border border-white/10 rounded-[32px] p-8 relative group"
+                  className={`border rounded-[32px] p-8 relative group transition-all duration-300 ${
+                    isDarkMode 
+                      ? 'glass border-white/10 shadow-2xl' 
+                      : 'bg-white border-zinc-200/80 shadow-xl shadow-zinc-200/30'
+                  }`}
                 >
                   <button 
                     onClick={() => removeQuestion(q.id)}
-                    className="absolute top-6 right-6 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 p-2 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                    className="absolute top-6 right-6 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 p-2 rounded-xl transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
                     title="Remover Questão"
                   >
                     <Trash2 size={20} />
@@ -282,7 +307,11 @@ export default function ActivityCreator({ currentUser, subjects, onBack, onNavig
                         <span className="w-8 h-8 rounded-full sidebar-grad flex items-center justify-center text-sm font-black text-white">
                           {index + 1}
                         </span>
-                        <span className="text-xs font-bold text-orange-500 uppercase tracking-widest border border-orange-500/20 bg-orange-500/10 px-3 py-1 rounded-full">
+                        <span className={`text-xs font-bold uppercase tracking-widest border px-3 py-1 rounded-full ${
+                          isDarkMode 
+                            ? 'text-orange-500 border-orange-500/20 bg-orange-500/10' 
+                            : 'text-orange-650 border-orange-200 bg-orange-50/60'
+                        }`}>
                           {q.type === 'multiple_choice' ? 'Múltipla Escolha' : q.type === 'true_false' ? 'Verdadeiro ou Falso' : 'Dissertativa'}
                         </span>
                       </div>
@@ -291,17 +320,23 @@ export default function ActivityCreator({ currentUser, subjects, onBack, onNavig
                         onChange={e => updateQuestion(q.id, { text: e.target.value })}
                         placeholder="Digite o enunciado da questão..."
                         rows={2}
-                        className="w-full bg-transparent border-b border-white/10 focus:border-orange-500 px-0 py-2 text-white focus:outline-none transition-colors resize-none font-bold text-lg"
+                        className={`w-full bg-transparent border-b focus:border-orange-500 px-0 py-2 focus:outline-none transition-colors resize-none font-bold text-lg ${
+                          isDarkMode ? 'border-white/10 text-white placeholder:text-zinc-650' : 'border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
+                        }`}
                       />
                     </div>
                     
                     <div className="w-32 shrink-0 space-y-2">
-                      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Pontos</label>
+                      <label className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-zinc-400' : 'text-zinc-550'}`}>Pontos</label>
                       <input 
                         type="number" 
                         value={q.points}
                         onChange={e => updateQuestion(q.id, { points: Number(e.target.value) })}
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500 transition-colors font-black text-center text-xl"
+                        className={`w-full border rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 transition-colors font-black text-center text-xl ${
+                          isDarkMode 
+                            ? 'bg-black/40 border-white/10 text-white' 
+                            : 'bg-slate-50 border-zinc-200 text-zinc-900'
+                        }`}
                       />
                     </div>
                   </div>
@@ -310,7 +345,7 @@ export default function ActivityCreator({ currentUser, subjects, onBack, onNavig
                   <div className="pl-11">
                     {q.type === 'multiple_choice' && (
                       <div className="space-y-3">
-                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">
+                        <label className={`text-[10px] font-bold uppercase tracking-widest block mb-2 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-550'}`}>
                           Defina as opções e marque a correta (Correção Automática)
                         </label>
                         {q.options?.map((opt, optIdx) => (
@@ -327,8 +362,10 @@ export default function ActivityCreator({ currentUser, subjects, onBack, onNavig
                                 }
                                 updateQuestion(q.id, { correctAnswer: newAnswers });
                               }}
-                              className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
-                                (Array.isArray(q.correctAnswer) ? q.correctAnswer.includes(opt) : q.correctAnswer === opt) ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-zinc-600 hover:border-zinc-400'
+                              className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer ${
+                                (Array.isArray(q.correctAnswer) ? q.correctAnswer.includes(opt) : q.correctAnswer === opt) 
+                                  ? 'bg-emerald-500 border-emerald-500 text-white' 
+                                  : (isDarkMode ? 'border-zinc-600 hover:border-zinc-400' : 'border-zinc-300 hover:border-zinc-400')
                               }`}
                             >
                               {(Array.isArray(q.correctAnswer) ? q.correctAnswer.includes(opt) : q.correctAnswer === opt) && <CheckCircle2 size={14} />}
@@ -337,14 +374,16 @@ export default function ActivityCreator({ currentUser, subjects, onBack, onNavig
                               type="text" 
                               value={opt}
                               onChange={e => updateOption(q.id, optIdx, e.target.value)}
-                              className={`flex-1 bg-black/20 border rounded-xl px-4 py-2 text-sm font-medium focus:outline-none transition-colors ${
-                                (Array.isArray(q.correctAnswer) ? q.correctAnswer.includes(opt) : q.correctAnswer === opt) ? 'border-emerald-500/50 text-emerald-100' : 'border-white/5 text-zinc-300 focus:border-white/20'
+                              className={`flex-1 border rounded-xl px-4 py-2 text-sm font-medium focus:outline-none transition-colors ${
+                                (Array.isArray(q.correctAnswer) ? q.correctAnswer.includes(opt) : q.correctAnswer === opt) 
+                                  ? (isDarkMode ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-100' : 'bg-emerald-50/60 border-emerald-500/50 text-emerald-900') 
+                                  : (isDarkMode ? 'bg-black/20 border-white/5 text-zinc-350 focus:border-white/20' : 'bg-slate-50 border-zinc-200 text-zinc-700 focus:border-zinc-350')
                               }`}
                             />
                             {q.options!.length > 2 && (
                               <button 
                                 onClick={() => removeOption(q.id, optIdx)}
-                                className="text-zinc-500 hover:text-red-500 p-2"
+                                className="text-zinc-500 hover:text-red-500 p-2 cursor-pointer"
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -353,7 +392,7 @@ export default function ActivityCreator({ currentUser, subjects, onBack, onNavig
                         ))}
                         <button 
                           onClick={() => addOption(q.id)}
-                          className="mt-2 text-xs font-bold text-orange-500 hover:text-orange-400 flex items-center gap-1"
+                          className="mt-2 text-xs font-bold text-orange-500 hover:text-orange-400 flex items-center gap-1 cursor-pointer"
                         >
                           <Plus size={14} /> Adicionar Opção
                         </button>
@@ -362,23 +401,23 @@ export default function ActivityCreator({ currentUser, subjects, onBack, onNavig
 
                     {q.type === 'true_false' && (
                       <div className="flex items-center gap-4 mt-4">
-                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Gabarito:</span>
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-zinc-400' : 'text-zinc-550'}`}>Gabarito:</span>
                         <button 
                           onClick={() => updateQuestion(q.id, { correctAnswer: 'true' })}
-                          className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all border ${
+                          className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all border cursor-pointer ${
                             q.correctAnswer === 'true' 
-                              ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' 
-                              : 'bg-black/20 border-white/5 text-zinc-400 hover:bg-white/5'
+                              ? (isDarkMode ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-emerald-50 border-emerald-500 text-emerald-700') 
+                              : (isDarkMode ? 'bg-black/20 border-white/5 text-zinc-400 hover:bg-white/5' : 'bg-slate-100 border-zinc-200 text-zinc-650 hover:bg-slate-200/70')
                           }`}
                         >
                           Verdadeiro
                         </button>
                         <button 
                           onClick={() => updateQuestion(q.id, { correctAnswer: 'false' })}
-                          className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all border ${
+                          className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all border cursor-pointer ${
                             q.correctAnswer === 'false' 
-                              ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' 
-                              : 'bg-black/20 border-white/5 text-zinc-400 hover:bg-white/5'
+                              ? (isDarkMode ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-emerald-50 border-emerald-500 text-emerald-700') 
+                              : (isDarkMode ? 'bg-black/20 border-white/5 text-zinc-400 hover:bg-white/5' : 'bg-slate-100 border-zinc-200 text-zinc-650 hover:bg-slate-200/70')
                           }`}
                         >
                           Falso
@@ -387,11 +426,13 @@ export default function ActivityCreator({ currentUser, subjects, onBack, onNavig
                     )}
 
                     {q.type === 'essay' && (
-                      <div className="bg-orange-500/5 border border-orange-500/10 rounded-2xl p-4 flex items-start gap-3 mt-4">
+                      <div className={`border rounded-2xl p-4 flex items-start gap-3 mt-4 transition-colors duration-300 ${
+                        isDarkMode ? 'bg-orange-500/5 border-orange-500/10' : 'bg-orange-50 border-orange-200/60'
+                      }`}>
                         <HelpCircle className="text-orange-500 shrink-0 mt-0.5" size={18} />
                         <div>
-                          <p className="text-sm font-bold text-orange-200">Correção Manual</p>
-                          <p className="text-xs text-orange-200/70 mt-1 leading-relaxed">
+                          <p className={`text-sm font-bold ${isDarkMode ? 'text-orange-200' : 'text-orange-950'}`}>Correção Manual</p>
+                          <p className={`text-xs mt-1 leading-relaxed ${isDarkMode ? 'text-orange-200/70' : 'text-orange-700/80'}`}>
                             O sistema não fará a correção automática desta questão. O aluno digitará um texto livre e você atribuirá a nota posteriormente na aba de "Submissões".
                           </p>
                         </div>
@@ -406,7 +447,11 @@ export default function ActivityCreator({ currentUser, subjects, onBack, onNavig
             <div className="flex flex-col sm:flex-row gap-4 pt-6">
               <button 
                 onClick={() => addQuestion('multiple_choice')}
-                className="flex-1 glass border border-orange-500/30 hover:bg-orange-500/10 text-orange-500 p-5 rounded-[24px] font-extrabold flex items-center justify-center gap-3 transition-all group"
+                className={`flex-1 border p-5 rounded-[24px] font-extrabold flex items-center justify-center gap-3 transition-all group cursor-pointer ${
+                  isDarkMode 
+                    ? 'glass border-orange-500/30 hover:bg-orange-500/10 text-orange-500' 
+                    : 'bg-white border-orange-500/35 hover:bg-orange-50/50 text-orange-600 shadow-sm hover:shadow-md'
+                }`}
               >
                 <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Circle size={20} />
@@ -416,7 +461,11 @@ export default function ActivityCreator({ currentUser, subjects, onBack, onNavig
 
               <button 
                 onClick={() => addQuestion('true_false')}
-                className="flex-1 glass border border-blue-500/30 hover:bg-blue-500/10 text-blue-500 p-5 rounded-[24px] font-extrabold flex items-center justify-center gap-3 transition-all group"
+                className={`flex-1 border p-5 rounded-[24px] font-extrabold flex items-center justify-center gap-3 transition-all group cursor-pointer ${
+                  isDarkMode 
+                    ? 'glass border-blue-500/30 hover:bg-blue-500/10 text-blue-500' 
+                    : 'bg-white border-blue-500/35 hover:bg-blue-50/50 text-blue-600 shadow-sm hover:shadow-md'
+                }`}
               >
                 <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <CheckCircle2 size={20} />
@@ -426,7 +475,11 @@ export default function ActivityCreator({ currentUser, subjects, onBack, onNavig
 
               <button 
                 onClick={() => addQuestion('essay')}
-                className="flex-1 glass border border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-500 p-5 rounded-[24px] font-extrabold flex items-center justify-center gap-3 transition-all group"
+                className={`flex-1 border p-5 rounded-[24px] font-extrabold flex items-center justify-center gap-3 transition-all group cursor-pointer ${
+                  isDarkMode 
+                    ? 'glass border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-500' 
+                    : 'bg-white border-emerald-500/35 hover:bg-emerald-50/50 text-emerald-650 shadow-sm hover:shadow-md'
+                }`}
               >
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <AlignLeft size={20} />

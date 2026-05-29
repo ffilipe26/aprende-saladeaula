@@ -11,9 +11,10 @@ interface ActivityDetailProps {
   isExam?: boolean;
   onBack: () => void;
   onFinish: (score?: number) => void;
+  isDarkMode: boolean;
 }
 
-export default function ActivityDetail({ activity, currentUser, isExam = false, onBack, onFinish }: ActivityDetailProps) {
+export default function ActivityDetail({ activity, currentUser, isExam = false, onBack, onFinish, isDarkMode }: ActivityDetailProps) {
   // ==========================================
   // ESTADOS LOCAIS
   // ==========================================
@@ -254,7 +255,11 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
-          className="glass border border-red-500/30 rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden"
+          className={`border rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden transition-colors duration-300 ${
+            isDarkMode 
+              ? 'glass border-red-500/30' 
+              : 'bg-white border-red-200/80'
+          }`}
         >
           {/* Fundo sutil vermelho */}
           <div className="absolute inset-0 bg-red-500/3 pointer-events-none" />
@@ -281,25 +286,29 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
             </div>
 
             {/* Box de informações */}
-            <div className="glass bg-red-500/5 border border-red-500/15 rounded-2xl p-5 text-left space-y-3">
+            <div className={`border rounded-2xl p-5 text-left space-y-3 transition-colors duration-300 ${
+              isDarkMode ? 'glass bg-red-500/5 border-red-500/15' : 'bg-red-50/50 border-red-250/60'
+            }`}>
               <div className="flex justify-between items-start">
                 <span className="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest">Prova</span>
                 <span className="text-sm font-bold text-[var(--text-main)] text-right max-w-[60%]">{activity.title}</span>
               </div>
-              <div className="h-px bg-red-500/10" />
+              <div className={`h-px transition-colors duration-300 ${isDarkMode ? 'bg-red-500/10' : 'bg-red-200/50'}`} />
               <div className="flex justify-between items-center">
                 <span className="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest">Matéria</span>
                 <span className="text-sm font-bold text-orange-500">{activity.subject}</span>
               </div>
-              <div className="h-px bg-red-500/10" />
+              <div className={`h-px transition-colors duration-300 ${isDarkMode ? 'bg-red-500/10' : 'bg-red-200/50'}`} />
               <div className="flex justify-between items-center">
                 <span className="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest">Prazo encerrado em</span>
-                <span className="text-sm font-bold text-red-400">{formattedDeadline}</span>
+                <span className="text-sm font-bold text-red-650 dark:text-red-400">{formattedDeadline}</span>
               </div>
             </div>
 
             {/* Mensagem de contato */}
-            <p className="text-xs text-[var(--text-muted)] bg-white/5 border border-white/5 rounded-xl px-4 py-3 leading-relaxed">
+            <p className={`text-xs border rounded-xl px-4 py-3 leading-relaxed transition-colors duration-300 ${
+              isDarkMode ? 'text-[var(--text-muted)] bg-white/5 border-white/5' : 'text-zinc-600 bg-slate-50 border-zinc-200'
+            }`}>
               Caso acredite que há um erro, entre em contato com seu professor.
             </p>
 
@@ -308,7 +317,11 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onBack}
-              className="w-full glass bg-zinc-800/50 text-[var(--text-main)] py-3 rounded-xl font-extrabold hover:bg-zinc-800 transition-all border border-white/5 text-sm flex items-center justify-center gap-2"
+              className={`w-full py-3 rounded-xl font-extrabold transition-all border text-sm flex items-center justify-center gap-2 cursor-pointer ${
+                isDarkMode 
+                  ? 'glass bg-zinc-800/50 hover:bg-zinc-800 border-white/5 text-[var(--text-main)]' 
+                  : 'bg-zinc-100 hover:bg-zinc-200 border-zinc-200 text-zinc-800 shadow-sm'
+              }`}
             >
               <ChevronLeft size={18} />
               Voltar às Provas
@@ -328,7 +341,9 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
         <motion.div 
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="glass border border-[var(--border)] rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden"
+          className={`border rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden transition-colors duration-300 ${
+            isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200/85'
+          }`}
         >
           {/* Fundo mesh fluido para design premium */}
           <div className="absolute inset-0 mesh-gradient opacity-10" />
@@ -352,20 +367,26 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
 
             {/* Metadados resumidos da atividade */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="glass bg-white/5 rounded-2xl p-4 border border-white/5">
+              <div className={`rounded-2xl p-4 border transition-colors duration-300 ${
+                isDarkMode ? 'glass bg-white/5 border-white/5' : 'bg-slate-50 border-zinc-200 shadow-sm'
+              }`}>
                 <p className="text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest mb-1">Duração Estimada</p>
                 <p className="text-xl font-extrabold text-orange-500">{isExam ? `${(activity as any).duration || '60'} min` : '60 min'}</p>
               </div>
-              <div className="glass bg-white/5 rounded-2xl p-4 border border-white/5">
+              <div className={`rounded-2xl p-4 border transition-colors duration-300 ${
+                isDarkMode ? 'glass bg-white/5 border-white/5' : 'bg-slate-50 border-zinc-200 shadow-sm'
+              }`}>
                 <p className="text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest mb-1">Questões</p>
                 <p className="text-xl font-extrabold text-[var(--text-main)]">{activity.questions.length}</p>
               </div>
             </div>
 
             {/* Caixa de aviso importante */}
-            <div className="bg-orange-500/5 border border-orange-500/10 rounded-xl p-4 text-left">
+            <div className={`border rounded-xl p-4 text-left transition-colors duration-300 ${
+              isDarkMode ? 'bg-orange-500/5 border-orange-500/10' : 'bg-orange-50 border-orange-200/50'
+            }`}>
               <p className="text-xs text-[var(--text-muted)] font-medium leading-relaxed">
-                <span className="text-orange-500 font-bold">Aviso:</span> O cronômetro começará a contar imediatamente após você iniciar. Você não poderá pausar o tempo.
+                <span className="text-orange-500 font-bold">Aviso:</span> O cronômetro começará a conta imediatamente após você iniciar. Você não poderá pausar o tempo.
               </p>
             </div>
             
@@ -375,12 +396,18 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onBack}
-                className="flex-1 glass bg-zinc-800/50 text-[var(--text-main)] py-3 rounded-xl font-extrabold hover:bg-zinc-800 transition-all border border-white/5 text-sm"
+                className={`flex-1 py-3 rounded-xl font-extrabold transition-all border text-sm cursor-pointer ${
+                  isDarkMode 
+                    ? 'glass bg-zinc-800/50 hover:bg-zinc-800 border-white/5 text-[var(--text-main)]' 
+                    : 'bg-zinc-100 hover:bg-zinc-200 border-zinc-200 text-zinc-800 shadow-sm'
+                }`}
               >
                 Cancelar
               </motion.button>
               {isDeadlinePassed ? (
-                <div className="flex-1 glass bg-red-500/10 text-red-500 py-3 rounded-xl font-extrabold flex items-center justify-center gap-2 text-sm border border-red-500/20 cursor-not-allowed">
+                <div className={`flex-1 py-3 rounded-xl font-extrabold flex items-center justify-center gap-2 text-sm border cursor-not-allowed ${
+                  isDarkMode ? 'glass bg-red-500/10 text-red-550 border-red-500/20' : 'bg-red-50 text-red-650 border-red-200'
+                }`}>
                   Prazo Encerrado
                 </div>
               ) : (
@@ -388,7 +415,7 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setIsStarted(true)}
-                  className="flex-1 sidebar-grad text-white py-3 rounded-xl font-extrabold shadow-lg shadow-orange-600/20 transition-all flex items-center justify-center gap-2 text-sm"
+                  className="flex-1 sidebar-grad text-white py-3 rounded-xl font-extrabold shadow-lg shadow-orange-600/20 transition-all flex items-center justify-center gap-2 text-sm cursor-pointer"
                 >
                   Iniciar Agora
                   <Play size={16} fill="currentColor" />
@@ -410,7 +437,9 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
         <motion.div 
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="glass border border-[var(--border)] rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden"
+          className={`border rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden transition-colors duration-300 ${
+            isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200/85'
+          }`}
         >
           {/* Fundo mesh fluido */}
           <div className="absolute inset-0 mesh-gradient opacity-10" />
@@ -444,13 +473,17 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
             
             {/* Cartões de estatísticas de aproveitamento */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="glass bg-white/5 rounded-2xl p-6 border border-white/5">
+              <div className={`rounded-2xl p-6 border transition-colors duration-300 ${
+                isDarkMode ? 'glass bg-white/5 border-white/5' : 'bg-slate-50 border-zinc-200 shadow-sm'
+              }`}>
                 <p className="text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider mb-1">Sua Pontuação</p>
                 <p className="text-3xl font-extrabold text-orange-500 font-display">
                   {finalScore} <span className="text-lg text-[var(--text-muted)] font-medium">/ {activity.totalPoints}</span>
                 </p>
               </div>
-              <div className="glass bg-white/5 rounded-2xl p-6 border border-white/5">
+              <div className={`rounded-2xl p-6 border transition-colors duration-300 ${
+                isDarkMode ? 'glass bg-white/5 border-white/5' : 'bg-slate-50 border-zinc-200 shadow-sm'
+              }`}>
                 <p className="text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider mb-1">Aproveitamento</p>
                 <p className="text-3xl font-extrabold text-emerald-500 font-display">
                   {Math.round((finalScore / activity.totalPoints) * 100)}%
@@ -467,7 +500,11 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
                   if (!isAlreadyConcluida) onFinish();
                   else onBack();
                 }}
-                className="flex-1 glass bg-zinc-800/50 text-[var(--text-main)] py-3 rounded-xl font-extrabold hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 border border-white/5 text-sm"
+                className={`flex-1 py-3 rounded-xl font-extrabold transition-all border text-sm flex items-center justify-center gap-2 cursor-pointer ${
+                  isDarkMode 
+                    ? 'glass bg-zinc-800/50 hover:bg-zinc-800 border-white/5 text-[var(--text-main)]' 
+                    : 'bg-zinc-100 hover:bg-zinc-200 border-zinc-200 text-zinc-800 shadow-sm'
+                }`}
               >
                 <ChevronLeft size={18} />
                 Voltar para {isExam ? 'Provas' : 'Atividades'}
@@ -476,7 +513,7 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setShowReview(true)}
-                className="flex-1 sidebar-grad text-white py-3 rounded-xl font-extrabold shadow-lg shadow-orange-600/20 transition-all flex items-center justify-center gap-2 text-sm"
+                className="flex-1 sidebar-grad text-white py-3 rounded-xl font-extrabold shadow-lg shadow-orange-600/20 transition-all flex items-center justify-center gap-2 text-sm cursor-pointer"
               >
                 Ver Revisão da {isExam ? 'Prova' : 'Atividade'}
                 <ArrowRight size={18} />
@@ -516,7 +553,9 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
               if (showReview) setShowReview(false);
               else onBack();
             }}
-            className="p-2.5 glass border border-[var(--border)] rounded-xl hover:text-orange-500 transition-all shadow-md"
+            className={`p-2.5 border rounded-xl hover:text-orange-500 transition-all shadow-md cursor-pointer ${
+              isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200 text-zinc-800'
+            }`}
           >
             <ChevronLeft size={20} />
           </motion.button>
@@ -534,7 +573,9 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
         <div className="flex items-center gap-4 self-stretch sm:self-auto justify-between sm:justify-end">
           {/* Mostrador de tempo restante */}
           {!showReview && (
-            <div className="glass border border-orange-500/20 rounded-xl px-4 py-2 flex items-center gap-2 shadow-md">
+            <div className={`border rounded-xl px-4 py-2 flex items-center gap-2 shadow-md transition-colors duration-300 ${
+              isDarkMode ? 'glass border-orange-500/20' : 'bg-orange-50 border-orange-200'
+            }`}>
               <Clock size={18} className="text-orange-500" />
               <span className="font-mono text-lg font-bold text-orange-500">{formatTime(timeLeft)}</span>
             </div>
@@ -546,7 +587,9 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
               <p className="text-sm font-bold text-[var(--text-main)]">{currentUser.name}</p>
               <p className="text-[8px] text-[var(--text-muted)] font-extrabold uppercase tracking-widest">Estudante</p>
             </div>
-            <div className="h-9 w-9 rounded-xl glass border border-[var(--border)] flex items-center justify-center text-orange-500">
+            <div className={`h-9 w-9 rounded-xl border flex items-center justify-center text-orange-500 transition-colors duration-300 ${
+              isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200'
+            }`}>
               <User size={18} />
             </div>
           </div>
@@ -560,7 +603,9 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
         <motion.div 
           initial={{ y: -10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="glass border border-white/10 rounded-2xl p-4 shadow-xl flex items-center justify-between gap-6 backdrop-blur-2xl bg-black/60"
+          className={`border rounded-2xl p-4 shadow-xl flex items-center justify-between gap-6 backdrop-blur-2xl transition-all duration-300 ${
+            isDarkMode ? 'glass border-white/10 bg-black/60' : 'bg-white/80 border-zinc-200 shadow-zinc-200/50 text-zinc-800'
+          }`}
         >
           {/* Metadados de progresso textual */}
           <div className="shrink-0">
@@ -571,7 +616,9 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
           </div>
           
           {/* Barra de progresso horizontal fina */}
-          <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden border border-white/5">
+          <div className={`flex-1 h-2 rounded-full overflow-hidden border transition-colors duration-300 ${
+            isDarkMode ? 'bg-white/5 border-white/5' : 'bg-zinc-100 border-zinc-200/80'
+          }`}>
             <motion.div 
               className="h-full sidebar-grad rounded-full"
               initial={{ width: 0 }}
@@ -590,7 +637,7 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
               whileTap={{ scale: 0.95 }}
               onClick={handleFinish}
               disabled={Object.keys(answers).length < activity.questions.length || isSubmitting}
-              className="sidebar-grad text-white px-5 py-2 rounded-xl text-xs font-extrabold tracking-widest uppercase shadow-md shadow-orange-600/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+              className="sidebar-grad text-white px-5 py-2 rounded-xl text-xs font-extrabold tracking-widest uppercase shadow-md shadow-orange-600/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 cursor-pointer"
             >
               {isSubmitting ? 'Finalizando...' : 'Finalizar'}
               <ArrowRight size={14} />
@@ -608,12 +655,14 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
       {/* ========================================== */}
       <motion.div 
         layout
-        className="bg-orange-500/5 border border-orange-500/10 rounded-2xl overflow-hidden shadow-sm"
+        className={`border rounded-2xl overflow-hidden shadow-sm transition-colors duration-300 ${
+          isDarkMode ? 'bg-orange-500/5 border-orange-500/10' : 'bg-orange-50/50 border-orange-200/70'
+        }`}
       >
         {/* Cabeçalho para abrir/fechar instruções */}
         <button 
           onClick={() => setIsInstructionsExpanded(!isInstructionsExpanded)}
-          className="w-full flex items-center justify-between p-4 text-left hover:bg-orange-500/5 transition-colors focus:outline-none"
+          className="w-full flex items-center justify-between p-4 text-left hover:bg-orange-500/5 transition-colors focus:outline-none cursor-pointer"
         >
           <div className="flex items-center gap-3">
             <div className="bg-orange-500/20 p-2 rounded-xl">
@@ -656,12 +705,16 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
       {/* FEEDBACK DO PROFESSOR                      */}
       {/* ========================================== */}
       {showReview && teacherFeedback && (
-        <div className="glass border border-orange-500/20 bg-orange-500/5 rounded-3xl p-6 md:p-8 space-y-3">
+        <div className={`border rounded-3xl p-6 md:p-8 space-y-3 transition-colors duration-300 ${
+          isDarkMode ? 'glass border-orange-500/20 bg-orange-500/5' : 'bg-orange-50 border-orange-200/60 shadow-sm'
+        }`}>
           <div className="flex items-center gap-3">
             <Trophy className="text-orange-500 animate-bounce" size={24} />
             <h3 className="text-lg font-bold font-display text-[var(--text-main)]">Feedback do Professor</h3>
           </div>
-          <p className="text-sm text-zinc-300 font-medium leading-relaxed bg-black/20 p-4 rounded-2xl border border-white/5">
+          <p className={`text-sm font-medium leading-relaxed p-4 rounded-2xl border transition-colors duration-300 ${
+            isDarkMode ? 'bg-black/20 text-zinc-300 border-white/5' : 'bg-white text-zinc-700 border-orange-200'
+          }`}>
             {teacherFeedback}
           </p>
         </div>
@@ -677,14 +730,20 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-50px" }}
-            className="glass border border-[var(--border)] rounded-3xl p-6 md:p-8 relative group hover:border-orange-500/10 transition-all shadow-md hover:shadow-orange-500/5 space-y-6"
+            className={`border rounded-3xl p-6 md:p-8 relative group transition-all shadow-md space-y-6 duration-300 ${
+              isDarkMode 
+                ? 'glass border-[var(--border)] hover:border-orange-500/10 hover:shadow-orange-500/5' 
+                : 'bg-white border-zinc-200 shadow-zinc-200/30 hover:border-orange-500/20 hover:shadow-orange-500/2'
+            }`}
           >
             {/* Badge de número da questão e pontos */}
             <div className="flex justify-between items-center">
               <span className="text-[8px] font-extrabold bg-orange-500/10 text-orange-500 px-3 py-1 rounded-lg tracking-wider uppercase border border-orange-500/10">
                 QUESTÃO {idx + 1}
               </span>
-              <span className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider bg-white/5 px-3 py-1 rounded-lg border border-white/5">
+              <span className={`text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider px-3 py-1 rounded-lg border transition-colors duration-300 ${
+                isDarkMode ? 'bg-white/5 border-white/5' : 'bg-slate-55 border-zinc-250'
+              }`}>
                 {q.points.toFixed(1)} Pontos
               </span>
             </div>
@@ -701,15 +760,22 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
                   const isSelected = Array.isArray(answers[q.id]) ? answers[q.id].includes(option) : answers[q.id] === option;
                   const isCorrect = Array.isArray(q.correctAnswer) ? q.correctAnswer.includes(option) : q.correctAnswer === option;
                   
-                  let borderClass = isSelected ? 'border-orange-500/40 bg-orange-500/5 shadow-sm' : 'border-[var(--border)] bg-white/5 hover:bg-white/10 hover:border-white/10';
-                  let checkClass = isSelected ? 'border-orange-500 bg-orange-500 shadow-md shadow-orange-500/30' : 'border-white/10';
+                  let borderClass = isSelected 
+                    ? 'border-orange-500/40 bg-orange-500/5 shadow-sm' 
+                    : (isDarkMode 
+                        ? 'border-[var(--border)] bg-white/5 hover:bg-white/10 hover:border-white/10 text-[var(--text-muted)]' 
+                        : 'border-zinc-200 bg-slate-50/50 hover:bg-slate-100/60 text-zinc-600');
+
+                  let checkClass = isSelected 
+                    ? 'border-orange-500 bg-orange-500 shadow-md shadow-orange-500/30' 
+                    : (isDarkMode ? 'border-white/10' : 'border-zinc-300');
                   
                   if (showCorrectAnswers) {
                     if (isCorrect) {
-                      borderClass = 'border-emerald-500/60 bg-emerald-500/10 shadow-sm shadow-emerald-500/5';
+                      borderClass = 'border-emerald-500/60 bg-emerald-500/10 shadow-sm shadow-emerald-500/5 text-emerald-700 dark:text-emerald-300';
                       checkClass = 'border-emerald-500 bg-emerald-500 text-white';
                     } else if (isSelected && !isCorrect) {
-                      borderClass = 'border-red-500/40 bg-red-500/5';
+                      borderClass = 'border-red-500/40 bg-red-500/5 text-red-650 dark:text-red-400';
                       checkClass = 'border-red-500 bg-red-500 text-white';
                     }
                   }
@@ -746,16 +812,16 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
                   whileTap={{ scale: showReview ? 1 : 0.99 }}
                   onClick={() => !showReview && handleAnswer(q.id, true)}
                   disabled={showReview}
-                  className={`flex-1 py-3.5 rounded-xl border font-bold text-sm transition-all ${
+                  className={`flex-1 py-3.5 rounded-xl border font-bold text-sm transition-all cursor-pointer ${
                     showCorrectAnswers
                       ? (q.correctAnswer === 'true'
-                          ? 'bg-emerald-500/10 border-emerald-500/60 text-emerald-500 shadow-sm shadow-emerald-500/5'
+                          ? (isDarkMode ? 'bg-emerald-500/10 border-emerald-500/60 text-emerald-400 shadow-sm' : 'bg-emerald-50 border-emerald-550 text-emerald-700 shadow-sm')
                           : answers[q.id] === true
-                            ? 'bg-red-500/5 border-red-500/40 text-red-500'
-                            : 'bg-white/5 border-[var(--border)] text-[var(--text-muted)]')
+                            ? 'bg-red-500/10 border-red-500/40 text-red-500'
+                            : (isDarkMode ? 'bg-white/5 border-[var(--border)] text-[var(--text-muted)]' : 'bg-slate-50 border-zinc-200 text-zinc-550'))
                       : (answers[q.id] === true 
-                          ? 'bg-orange-500/10 border-orange-500/40 text-orange-500 shadow-sm' 
-                          : 'bg-white/5 border-[var(--border)] text-[var(--text-muted)] hover:border-orange-500/20')
+                          ? (isDarkMode ? 'bg-orange-500/10 border-orange-500/40 text-orange-400 shadow-sm' : 'bg-orange-50 border-orange-500 text-orange-700 shadow-sm') 
+                          : (isDarkMode ? 'bg-white/5 border-[var(--border)] text-[var(--text-muted)] hover:border-orange-500/20' : 'bg-slate-50 border-zinc-200 text-zinc-550 hover:bg-slate-100'))
                   }`}
                 >
                   Verdadeiro
@@ -765,16 +831,16 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
                   whileTap={{ scale: showReview ? 1 : 0.99 }}
                   onClick={() => !showReview && handleAnswer(q.id, false)}
                   disabled={showReview}
-                  className={`flex-1 py-3.5 rounded-xl border font-bold text-sm transition-all ${
+                  className={`flex-1 py-3.5 rounded-xl border font-bold text-sm transition-all cursor-pointer ${
                     showCorrectAnswers
                       ? (q.correctAnswer === 'false'
-                          ? 'bg-emerald-500/10 border-emerald-500/60 text-emerald-500 shadow-sm shadow-emerald-500/5'
+                          ? (isDarkMode ? 'bg-emerald-500/10 border-emerald-500/60 text-emerald-400 shadow-sm' : 'bg-emerald-50 border-emerald-550 text-emerald-700 shadow-sm')
                           : answers[q.id] === false
-                            ? 'bg-red-500/5 border-red-500/40 text-red-500'
-                            : 'bg-white/5 border-[var(--border)] text-[var(--text-muted)]')
+                            ? 'bg-red-500/10 border-red-500/40 text-red-500'
+                            : (isDarkMode ? 'bg-white/5 border-[var(--border)] text-[var(--text-muted)]' : 'bg-slate-50 border-zinc-200 text-zinc-550'))
                       : (answers[q.id] === false 
-                          ? 'bg-orange-500/10 border-orange-500/40 text-orange-500 shadow-sm' 
-                          : 'bg-white/5 border-[var(--border)] text-[var(--text-muted)] hover:border-orange-500/20')
+                          ? (isDarkMode ? 'bg-orange-500/10 border-orange-500/40 text-orange-400 shadow-sm' : 'bg-orange-50 border-orange-500 text-orange-700 shadow-sm') 
+                          : (isDarkMode ? 'bg-white/5 border-[var(--border)] text-[var(--text-muted)] hover:border-orange-500/20' : 'bg-slate-50 border-zinc-200 text-zinc-550 hover:bg-slate-100'))
                   }`}
                 >
                   Falso
@@ -788,8 +854,12 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
                 value={answers[q.id] || ''}
                 onChange={(e) => !showReview && handleAnswer(q.id, e.target.value)}
                 readOnly={showReview}
-                className={`w-full h-36 glass border border-white/5 rounded-2xl p-4 focus:outline-none transition-all resize-none text-sm font-medium leading-relaxed ${
-                  showReview ? 'bg-black/20 text-zinc-300' : 'focus:ring-1 focus:ring-orange-500/30 focus:border-orange-500/40'
+                className={`w-full h-36 border rounded-2xl p-4 focus:outline-none transition-all resize-none text-sm font-medium leading-relaxed ${
+                  showReview 
+                    ? (isDarkMode ? 'bg-black/20 text-zinc-300 border-white/5' : 'bg-slate-50 text-zinc-500 border-zinc-200') 
+                    : (isDarkMode 
+                        ? 'glass border-white/5 text-white focus:ring-1 focus:ring-orange-500/30 focus:border-orange-500/40' 
+                        : 'bg-white text-zinc-800 border-zinc-200 focus:ring-1 focus:ring-orange-500/30 focus:border-orange-500/40')
                 }`}
               />
             )}

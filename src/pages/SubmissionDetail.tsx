@@ -10,9 +10,10 @@ interface SubmissionDetailProps {
   isExam?: boolean;
   submissionId: string;
   onBack: () => void;
+  isDarkMode: boolean;
 }
 
-export default function SubmissionDetail({ activity, isExam, submissionId, onBack }: SubmissionDetailProps) {
+export default function SubmissionDetail({ activity, isExam, submissionId, onBack, isDarkMode }: SubmissionDetailProps) {
   const [submission, setSubmission] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editedScore, setEditedScore] = useState<number>(0);
@@ -179,15 +180,15 @@ export default function SubmissionDetail({ activity, isExam, submissionId, onBac
             initial={{ opacity: 0, y: 40, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className={`fixed bottom-8 right-8 z-50 glass border px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 max-w-sm ${
+            className={`fixed bottom-8 right-8 z-50 border px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 max-w-sm transition-colors duration-300 ${
               toastType === 'success'
-                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
-                : 'border-red-500/30 bg-red-500/10 text-red-400'
+                ? (isDarkMode ? 'glass border-emerald-500/30 bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-800')
+                : (isDarkMode ? 'glass border-red-500/30 bg-red-500/10 text-red-400' : 'bg-red-50 border-red-200 text-red-800')
             }`}
           >
             {toastType === 'success' ? <CheckCircle2 size={20} className="shrink-0" /> : <AlertCircle size={20} className="shrink-0" />}
             <p className="text-sm font-bold">{toastMsg}</p>
-            <button onClick={() => setToastMsg(null)} className="ml-2 opacity-60 hover:opacity-100 transition-opacity">
+            <button onClick={() => setToastMsg(null)} className="ml-2 opacity-60 hover:opacity-100 transition-opacity cursor-pointer">
               <X size={16} />
             </button>
           </motion.div>
@@ -204,7 +205,9 @@ export default function SubmissionDetail({ activity, isExam, submissionId, onBac
           whileHover={{ scale: 1.05, x: -2 }}
           whileTap={{ scale: 0.95 }}
           onClick={onBack}
-          className="p-3 glass border border-[var(--border)] rounded-2xl hover:text-orange-500 transition-all shadow-md"
+          className={`p-3 border rounded-2xl hover:text-orange-500 transition-all shadow-md cursor-pointer ${
+            isDarkMode ? 'glass border-[var(--border)] text-zinc-400' : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+          }`}
         >
           <ChevronLeft size={20} />
         </motion.button>
@@ -218,7 +221,9 @@ export default function SubmissionDetail({ activity, isExam, submissionId, onBac
 
       {/* ========== VISÃO GERAL ========== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div className="glass border border-[var(--border)] rounded-3xl p-6">
+        <div className={`border rounded-3xl p-6 transition-all duration-300 ${
+          isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200/80 shadow-md shadow-zinc-150/30'
+        }`}>
           <p className="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest mb-3">Pontuação (Editável)</p>
           <div className="flex items-center gap-4">
             <input
@@ -228,19 +233,23 @@ export default function SubmissionDetail({ activity, isExam, submissionId, onBac
               max={activity.totalPoints}
               value={editedScore}
               onChange={(e) => setEditedScore(Number(e.target.value))}
-              className="w-24 bg-black/20 border border-[var(--border)] rounded-xl py-2 px-4 text-2xl font-extrabold text-orange-500 focus:outline-none focus:border-orange-500/50 text-center"
+              className={`w-24 border rounded-xl py-2 px-4 text-2xl font-extrabold focus:outline-none focus:border-orange-500/50 text-center ${
+                isDarkMode ? 'bg-black/20 border-[var(--border)] text-orange-500' : 'bg-slate-100 border-zinc-200 text-orange-600'
+              }`}
             />
             <span className="text-lg font-bold text-[var(--text-muted)]">/ {activity.totalPoints} pts</span>
           </div>
           <p className="text-[10px] text-[var(--text-muted)] mt-2">
             Auto-calculado:{' '}
-            <span className="text-orange-400 font-bold">
+            <span className="text-orange-500 font-bold">
               {calcAutoScore(submission.answers || {}).toFixed(1)} pts
             </span>
           </p>
         </div>
         {isExam && (
-          <div className="glass border border-[var(--border)] rounded-3xl p-6">
+          <div className={`border rounded-3xl p-6 transition-all duration-300 ${
+            isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200/80 shadow-md shadow-zinc-150/30'
+          }`}>
             <p className="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest mb-3">Status da Submissão</p>
             <div className="flex flex-col gap-1">
               <span className={`text-sm font-bold ${submission.status === 'late' ? 'text-red-500' : 'text-emerald-500'}`}>
@@ -266,7 +275,9 @@ export default function SubmissionDetail({ activity, isExam, submissionId, onBac
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.04 }}
-              className="glass border border-[var(--border)] rounded-3xl p-6 md:p-8 space-y-4"
+              className={`border rounded-3xl p-6 md:p-8 space-y-4 transition-all duration-300 ${
+                isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200/80 shadow-md shadow-zinc-150/30'
+              }`}
             >
               {/* Header questão */}
               <div className="flex justify-between items-center">
@@ -281,12 +292,14 @@ export default function SubmissionDetail({ activity, isExam, submissionId, onBac
                         <CheckCircle2 size={11} /> CORRETO
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-widest">
+                      <span className="inline-flex items-center gap-1 bg-red-500/10 text-red-500 border border-red-500/20 px-2.5 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-widest">
                         <XCircle size={11} /> ERRADO
                       </span>
                     )
                   )}
-                  <span className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider bg-white/5 px-3 py-1 rounded-lg border border-white/5">
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-lg border transition-colors duration-300 ${
+                    isDarkMode ? 'bg-white/5 border-white/5 text-[var(--text-muted)]' : 'bg-zinc-100 border-zinc-200 text-zinc-700'
+                  }`}>
                     {q.points} pts
                   </span>
                 </div>
@@ -295,20 +308,24 @@ export default function SubmissionDetail({ activity, isExam, submissionId, onBac
               <h4 className="text-base font-bold text-[var(--text-main)]">{q.text}</h4>
 
               {/* Resposta do Aluno */}
-              <div className={`border rounded-2xl p-4 ${
+              <div className={`border rounded-2xl p-4 transition-all duration-300 ${
                 isObjective
                   ? correct
-                    ? 'bg-emerald-500/5 border-emerald-500/20'
-                    : 'bg-red-500/5 border-red-500/20'
-                  : 'bg-black/20 border-white/5'
+                    ? (isDarkMode ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-emerald-50 border-emerald-200')
+                    : (isDarkMode ? 'bg-red-500/5 border-red-500/20' : 'bg-red-50 border-red-200')
+                  : (isDarkMode ? 'bg-black/20 border-white/5 text-zinc-100' : 'bg-slate-50 border-zinc-200 text-zinc-800')
               }`}>
                 <p className={`text-[9px] font-extrabold uppercase tracking-widest mb-2 ${
-                  isObjective ? (correct ? 'text-emerald-500' : 'text-red-400') : 'text-orange-500'
+                  isObjective 
+                    ? (correct ? (isDarkMode ? 'text-emerald-500' : 'text-emerald-700') : (isDarkMode ? 'text-red-400' : 'text-red-700'))
+                    : 'text-orange-500'
                 }`}>
                   Resposta do Aluno:
                 </p>
                 <p className={`text-sm font-medium ${
-                  isObjective ? (correct ? 'text-emerald-300' : 'text-red-300') : 'text-[var(--text-main)] whitespace-pre-wrap'
+                  isObjective 
+                    ? (correct ? (isDarkMode ? 'text-emerald-300' : 'text-emerald-850 font-bold') : (isDarkMode ? 'text-red-350' : 'text-red-850 font-bold')) 
+                    : 'text-[var(--text-main)] whitespace-pre-wrap'
                 }`}>
                   {formatUserAnswer(q, userAnswer)}
                 </p>
@@ -316,11 +333,17 @@ export default function SubmissionDetail({ activity, isExam, submissionId, onBac
 
               {/* Gabarito (apenas para objetivas) */}
               {isObjective && (
-                <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4">
-                  <p className="text-[9px] font-extrabold text-emerald-500 uppercase tracking-widest mb-2">
+                <div className={`border rounded-2xl p-4 transition-all duration-300 ${
+                  isDarkMode ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-emerald-50/50 border-emerald-200'
+                }`}>
+                  <p className={`text-[9px] font-extrabold uppercase tracking-widest mb-2 ${
+                    isDarkMode ? 'text-emerald-500' : 'text-emerald-700'
+                  }`}>
                     Gabarito:
                   </p>
-                  <p className="text-sm font-bold text-emerald-400">
+                  <p className={`text-sm font-bold ${
+                    isDarkMode ? 'text-emerald-450' : 'text-emerald-800'
+                  }`}>
                     {formatCorrectAnswer(q)}
                   </p>
                 </div>
@@ -339,7 +362,9 @@ export default function SubmissionDetail({ activity, isExam, submissionId, onBac
 
       {/* ========== FEEDBACK DO PROFESSOR ========== */}
       {isExam && (
-        <div className="glass border border-[var(--border)] rounded-3xl p-6 md:p-8 mt-8">
+        <div className={`border rounded-3xl p-6 md:p-8 mt-8 transition-all duration-300 ${
+          isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200/80 shadow-md shadow-zinc-150/30'
+        }`}>
           <label className="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest mb-4 block">
             Feedback Geral / Comentários
           </label>
@@ -347,7 +372,9 @@ export default function SubmissionDetail({ activity, isExam, submissionId, onBac
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
             placeholder="Deixe um comentário sobre o desempenho na prova..."
-            className="w-full glass border border-white/5 rounded-2xl py-4 px-6 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 transition-all text-sm font-medium min-h-[120px] resize-none"
+            className={`w-full border rounded-2xl py-4 px-6 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 transition-all text-sm font-medium min-h-[120px] resize-none ${
+              isDarkMode ? 'glass border-white/5 text-white' : 'bg-slate-50 border-zinc-200 text-zinc-900'
+            }`}
           />
         </div>
       )}
@@ -359,7 +386,7 @@ export default function SubmissionDetail({ activity, isExam, submissionId, onBac
           whileTap={{ scale: 0.98 }}
           onClick={handleSave}
           disabled={saving}
-          className="sidebar-grad text-white px-10 py-4 rounded-2xl font-extrabold shadow-xl shadow-orange-600/20 transition-all flex items-center gap-2 disabled:opacity-50"
+          className="sidebar-grad text-white px-10 py-4 rounded-2xl font-extrabold shadow-xl shadow-orange-600/20 transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
         >
           {saving ? 'Salvando...' : 'Salvar Correção e Nota'}
           <Save size={18} />

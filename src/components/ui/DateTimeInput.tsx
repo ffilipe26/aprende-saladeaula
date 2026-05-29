@@ -60,7 +60,7 @@ export default function DateTimeInput({ value, onChange, label }: DateTimeInputP
           value={text}
           onChange={handleInput}
           placeholder="DD/MM/AAAA HH:MM"
-          className="w-full glass border border-white/5 rounded-2xl py-5 pl-16 pr-6 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 transition-all text-sm font-bold placeholder:text-zinc-600"
+          className="w-full glass border border-[var(--border)] rounded-2xl py-5 pl-16 pr-6 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 transition-all text-sm font-bold text-[var(--text-main)] placeholder:text-zinc-450 dark:placeholder:text-zinc-600"
         />
       </div>
     </div>

@@ -11,6 +11,7 @@ interface SubmissionsProps {
   currentUser: AuthUser;
   onBack: () => void;
   onGradeSubmission: (submissionId: string) => void;
+  isDarkMode: boolean;
 }
 
 type FilterStatus = 'all' | 'submitted' | 'late' | 'graded' | 'absent';
@@ -27,7 +28,7 @@ interface CombinedRow {
   submission?: any;
 }
 
-export default function Submissions({ activity, isExam, currentUser, onBack, onGradeSubmission }: SubmissionsProps) {
+export default function Submissions({ activity, isExam, currentUser, onBack, onGradeSubmission, isDarkMode }: SubmissionsProps) {
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [allStudents, setAllStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -160,11 +161,13 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
             initial={{ opacity: 0, y: 40, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-8 right-8 z-50 glass border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 max-w-sm"
+            className={`fixed bottom-8 right-8 z-50 border px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 max-w-sm transition-colors duration-300 ${
+              isDarkMode ? 'glass border-emerald-500/30 bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 border-emerald-250 text-emerald-800'
+            }`}
           >
             <CheckCircle2 size={20} className="shrink-0" />
             <p className="text-sm font-bold">{toastMsg}</p>
-            <button onClick={() => setToastMsg(null)} className="ml-2 text-emerald-400/60 hover:text-emerald-400 transition-colors">
+            <button onClick={() => setToastMsg(null)} className="ml-2 hover:opacity-80 transition-colors cursor-pointer">
               <X size={16} />
             </button>
           </motion.div>
@@ -182,7 +185,9 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
             whileHover={{ scale: 1.05, x: -2 }}
             whileTap={{ scale: 0.95 }}
             onClick={onBack}
-            className="p-3 glass border border-[var(--border)] rounded-2xl hover:text-orange-500 transition-all shadow-md"
+            className={`p-3 border rounded-2xl hover:text-orange-500 transition-all shadow-md cursor-pointer ${
+              isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200 text-zinc-800'
+            }`}
           >
             <ChevronLeft size={20} />
           </motion.button>
@@ -197,7 +202,7 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
           whileTap={{ scale: 0.98 }}
           onClick={handlePublishAll}
           disabled={publishing || submissions.length === 0}
-          className="sidebar-grad text-white px-8 py-4 rounded-2xl font-extrabold shadow-xl shadow-orange-600/20 transition-all flex items-center gap-2 disabled:opacity-50"
+          className="sidebar-grad text-white px-8 py-4 rounded-2xl font-extrabold shadow-xl shadow-orange-600/20 transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
         >
           {publishing ? 'Publicando...' : 'Publicar Notas (Lote)'}
           <Check size={18} />
@@ -212,14 +217,18 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
           transition={{ delay: 0.05 }}
           className="grid grid-cols-2 sm:grid-cols-4 gap-4"
         >
-          <div className="glass border border-[var(--border)] rounded-2xl p-4 text-center">
+          <div className={`border rounded-2xl p-4 text-center transition-colors duration-300 ${
+            isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200/80 shadow-md shadow-zinc-250/20'
+          }`}>
             <div className="flex items-center justify-center gap-2 mb-1">
               <Users size={14} className="text-[var(--text-muted)]" />
               <p className="text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest">Total de Alunos</p>
             </div>
             <p className="text-2xl font-extrabold font-display text-[var(--text-main)]">{totalStudents}</p>
           </div>
-          <div className="glass border border-[var(--border)] rounded-2xl p-4 text-center">
+          <div className={`border rounded-2xl p-4 text-center transition-colors duration-300 ${
+            isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200/80 shadow-md shadow-zinc-250/20'
+          }`}>
             <div className="flex items-center justify-center gap-2 mb-1">
               <CheckCircle2 size={14} className="text-emerald-500" />
               <p className="text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest">Entregaram</p>
@@ -229,7 +238,9 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
               <span className="text-sm text-[var(--text-muted)] font-medium">/{totalStudents}</span>
             </p>
           </div>
-          <div className="glass border border-[var(--border)] rounded-2xl p-4 text-center">
+          <div className={`border rounded-2xl p-4 text-center transition-colors duration-300 ${
+            isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200/80 shadow-md shadow-zinc-250/20'
+          }`}>
             <div className="flex items-center justify-center gap-2 mb-1">
               <BarChart2 size={14} className="text-orange-500" />
               <p className="text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest">Média da Turma</p>
@@ -238,7 +249,9 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
               {avgScore != null ? avgScore.toFixed(1) : '—'}
             </p>
           </div>
-          <div className="glass border border-[var(--border)] rounded-2xl p-4 text-center">
+          <div className={`border rounded-2xl p-4 text-center transition-colors duration-300 ${
+            isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200/80 shadow-md shadow-zinc-250/20'
+          }`}>
             <div className="flex items-center justify-center gap-2 mb-1">
               <Clock size={14} className="text-yellow-500" />
               <p className="text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest">Pendentes</p>
@@ -255,14 +268,20 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
             <button
               key={f.value}
               onClick={() => setFilterStatus(f.value)}
-              className={`px-4 py-2 rounded-xl text-[11px] font-extrabold uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-xl text-[11px] font-extrabold uppercase tracking-wider border transition-all flex items-center gap-1.5 cursor-pointer ${
                 filterStatus === f.value
                   ? 'sidebar-grad text-white border-transparent shadow-md shadow-orange-600/20'
-                  : 'glass border-[var(--border)] text-[var(--text-muted)] hover:border-orange-500/30 hover:text-orange-500'
+                  : (isDarkMode 
+                      ? 'glass border-[var(--border)] text-[var(--text-muted)] hover:border-orange-500/30 hover:text-orange-500' 
+                      : 'bg-white border-zinc-200 text-zinc-600 hover:border-orange-500/35 hover:text-orange-600 shadow-sm')
               }`}
             >
               {f.label}
-              <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-extrabold ${filterStatus === f.value ? 'bg-white/20' : 'bg-white/5'}`}>
+              <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-extrabold transition-colors duration-300 ${
+                filterStatus === f.value 
+                  ? 'bg-white/20' 
+                  : (isDarkMode ? 'bg-white/5 text-zinc-400' : 'bg-zinc-100 text-zinc-650')
+              }`}>
                 {f.count}
               </span>
             </button>
@@ -271,11 +290,15 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
       )}
 
       {/* ========== TABELA ========== */}
-      <div className="glass border border-[var(--border)] rounded-3xl overflow-hidden shadow-2xl">
+      <div className={`border rounded-3xl overflow-hidden shadow-2xl transition-all duration-300 ${
+        isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200/85'
+      }`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-[var(--border)] bg-black/20">
+              <tr className={`border-b transition-colors duration-300 ${
+                isDarkMode ? 'border-white/5 bg-black/20' : 'border-zinc-200 bg-slate-50'
+              }`}>
                 <th className="px-8 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest">Aluno</th>
                 <th className="px-8 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest text-center">Status</th>
                 <th className="px-8 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest text-center">Nota (Auto/Total)</th>
@@ -300,7 +323,9 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
                 filteredRows.map((row) => (
                   <tr
                     key={row.id}
-                    className={`hover:bg-white/5 transition-colors group ${row.status === 'absent' ? 'opacity-70' : ''}`}
+                    className={`transition-colors group ${row.status === 'absent' ? 'opacity-70' : ''} ${
+                      isDarkMode ? 'hover:bg-white/5' : 'hover:bg-zinc-50'
+                    }`}
                   >
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-3">
@@ -355,7 +380,9 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
                       {row.type === 'submission' ? (
                         <button
                           onClick={() => onGradeSubmission(row.submission.id)}
-                          className="p-3 glass border border-white/5 rounded-xl text-[var(--text-muted)] hover:text-orange-500 hover:border-orange-500/30 transition-all inline-flex items-center gap-2"
+                          className={`p-3 border rounded-xl hover:text-orange-500 hover:border-orange-500/30 transition-all inline-flex items-center gap-2 cursor-pointer ${
+                            isDarkMode ? 'glass border-white/5 text-[var(--text-muted)]' : 'bg-zinc-50 border-zinc-200 text-zinc-650 hover:shadow-md'
+                          }`}
                         >
                           <Eye size={16} /> Corrigir
                         </button>

@@ -609,6 +609,7 @@ export default function App() {
               // Sincroniza o estado local para mover de Pendentes para Concluídas
               handleFinishActivity(activity.id, score || 0);
             }}
+            isDarkMode={isDarkMode}
           />
         );
       }
@@ -642,6 +643,7 @@ export default function App() {
             onFinish={(score) => {
               handleFinishExam(exam.id, score || 0);
             }}
+            isDarkMode={isDarkMode}
           />
         );
       }
@@ -657,6 +659,7 @@ export default function App() {
             isExam={gradingType === 'exam'}
             submissionId={selectedSubmissionForGrading}
             onBack={() => setSelectedSubmissionForGrading(null)}
+            isDarkMode={isDarkMode}
           />
         );
       }
@@ -676,6 +679,7 @@ export default function App() {
               setGradingType(null);
             }}
             onGradeSubmission={(subId) => setSelectedSubmissionForGrading(subId)}
+            isDarkMode={isDarkMode}
           />
         );
       }
@@ -692,6 +696,7 @@ export default function App() {
               onBack={() => setActiveSection('dashboard')}
               onNavigate={setActiveSection}
               onReload={handleReload}
+              isDarkMode={isDarkMode}
             />
           );
         }
@@ -706,6 +711,7 @@ export default function App() {
               onBack={() => setActiveSection('exams')}
               onNavigate={setActiveSection}
               onReload={handleReload}
+              isDarkMode={isDarkMode}
             />
           );
         }
@@ -725,6 +731,7 @@ export default function App() {
               activities={activities}
               {...commonHeaderProps}
               onNavigate={setActiveSection}
+              isDarkMode={isDarkMode}
             />
           );
         }
@@ -739,6 +746,7 @@ export default function App() {
               onNavigate={setActiveSection}
               onCreateActivity={() => setActiveSection('activity_creator')}
               onCreateExam={() => setActiveSection('exam_creator')}
+              isDarkMode={isDarkMode}
             />
           );
         }
@@ -748,11 +756,13 @@ export default function App() {
             activities={studentActivities}
             onStartActivity={handleStartActivity}
             userName={currentUser?.name ?? ''}
+            role={currentUser.role}
             onOpenCalendar={() => setActiveSection('calendar')}
             onProfileClick={() => setActiveSection('settings')}
             notifications={notifications}
             onRemoveNotification={removeNotification}
             onMarkAsRead={markNotificationAsRead}
+            isDarkMode={isDarkMode}
           />
         );
 
@@ -765,6 +775,7 @@ export default function App() {
             onAddLesson={(lesson) => setLessons((prev) => [lesson, ...prev])}
             selectedAdminSubjectId={isAdmin || isTeacher ? selectedAdminSubjectId : undefined}
             setSelectedAdminSubjectId={isAdmin || isTeacher ? setSelectedAdminSubjectId : undefined}
+            isDarkMode={isDarkMode}
             {...commonHeaderProps}
           />
         );
@@ -783,6 +794,7 @@ export default function App() {
             onNavigate={setActiveSection}
             {...commonHeaderProps}
             onReload={handleReload}
+            isDarkMode={isDarkMode}
           />
         );
 
@@ -800,6 +812,7 @@ export default function App() {
             {...commonHeaderProps}
             onReload={handleReload}
             onNavigate={setActiveSection}
+            isDarkMode={isDarkMode}
           />
         );
 
@@ -811,6 +824,7 @@ export default function App() {
             onRemoveNotification={removeNotification}
             onMarkAsRead={markNotificationAsRead}
             onProfileClick={() => setActiveSection('settings')}
+            isDarkMode={isDarkMode}
           />
         );
 
@@ -822,8 +836,8 @@ export default function App() {
             subjects={userSubjects}
             schoolMembers={schoolMembers}
             selectedAdminSubjectId={selectedAdminSubjectId}
-            setSelectedAdminSubjectId={setSelectedAdminSubjectId}
             {...commonHeaderProps}
+            isDarkMode={isDarkMode}
           />
         );
 
@@ -838,6 +852,7 @@ export default function App() {
             setSubjects={setSubjects}
             userRole={currentUser?.role ?? 'student'}
             {...commonHeaderProps}
+            isDarkMode={isDarkMode}
           />
         );
 
@@ -864,13 +879,20 @@ export default function App() {
   // ==========================================
   if (!currentUser) {
     if (publicScreen === 'landing') {
-      return <LandingPage onNavigate={(s) => setPublicScreen(s as PublicScreen)} />;
+      return (
+        <LandingPage 
+          onNavigate={(s) => setPublicScreen(s as PublicScreen)} 
+          isDarkMode={isDarkMode} 
+          onToggleTheme={toggleTheme} 
+        />
+      );
     }
     if (publicScreen === 'onboarding') {
       return (
         <InstitutionOnboarding
           onBack={() => setPublicScreen('login')}
           onComplete={(user, mustChange, isDemo) => handleLogin(user, mustChange, isDemo)}
+          isDarkMode={isDarkMode}
         />
       );
     }
@@ -879,15 +901,21 @@ export default function App() {
         mode={publicScreen === 'register' ? 'register' : 'login'}
         onNavigate={(s) => setPublicScreen(s as PublicScreen)}
         onLogin={handleLogin}
+        isDarkMode={isDarkMode}
       />
     );
   }
 
   if (isChangingPassword) {
-    return <ChangePassword userName={currentUser.name} onSuccess={() => finalizeLogin(currentUser, false)} />;
+    return (
+      <ChangePassword 
+        userName={currentUser.name} 
+        onSuccess={() => finalizeLogin(currentUser, false)} 
+        isDarkMode={isDarkMode}
+      />
+    );
   }
-  // ==========================================
-  // LAYOUT PRINCIPAL (AUTENTICADO)
+
   // ==========================================
   return (
     <div className="flex min-h-screen bg-[var(--bg-body)]">
@@ -923,6 +951,7 @@ export default function App() {
           userRole={currentUser.role}
           userName={currentUser.name}
           userEmail={currentUser.email}
+          isDarkMode={isDarkMode}
         />
       </div>
 

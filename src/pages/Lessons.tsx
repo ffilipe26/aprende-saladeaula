@@ -29,6 +29,7 @@ interface LessonsProps {
   onProfileClick: () => void;
   selectedAdminSubjectId?: string | null;
   setSelectedAdminSubjectId?: (id: string | null) => void;
+  isDarkMode: boolean;
 }
 
 // Extrai ID do vídeo do YouTube para incorporação
@@ -49,7 +50,8 @@ export default function Lessons({
   onMarkAsRead,
   onProfileClick,
   selectedAdminSubjectId,
-  setSelectedAdminSubjectId
+  setSelectedAdminSubjectId,
+  isDarkMode
 }: LessonsProps) {
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -123,7 +125,9 @@ export default function Lessons({
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass border border-[var(--border)] rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-6"
+          className={`border rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-6 transition-all duration-300 ${
+            isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200/80 shadow-md shadow-zinc-150/30'
+          }`}
         >
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 bg-orange-500/10 text-orange-500 rounded-xl flex items-center justify-center">
@@ -138,7 +142,7 @@ export default function Lessons({
             <select
               value={selectedAdminSubjectId || 'all'}
               onChange={(e) => setSelectedAdminSubjectId(e.target.value === 'all' ? null : e.target.value)}
-              className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-xl py-3 px-5 text-xs font-bold text-[var(--text-main)] appearance-none pr-12 focus:outline-none focus:border-orange-500/50 transition-all"
+              className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-xl py-3 px-5 text-xs font-bold text-[var(--text-main)] appearance-none pr-12 focus:outline-none focus:border-orange-500/50 transition-all cursor-pointer"
             >
               <option value="all">Ver Todas as Turmas (Grid)</option>
               {subjects.map(sub => (
@@ -152,10 +156,12 @@ export default function Lessons({
 
       {/* Filtro por Matéria para Alunos/Professores */}
       {!isAdminView && (
-        <div className="flex gap-2 p-1.5 glass border border-[var(--border)] rounded-[20px] overflow-x-auto">
+        <div className={`flex gap-2 p-1.5 border rounded-[20px] overflow-x-auto transition-all duration-300 ${
+          isDarkMode ? 'glass border border-[var(--border)]' : 'bg-zinc-100 border-zinc-200 shadow-inner'
+        }`}>
           <button
             onClick={() => setSelectedSubjectId('all')}
-            className={`px-5 py-2.5 rounded-[14px] font-bold text-sm transition-all relative shrink-0 ${
+            className={`px-5 py-2.5 rounded-[14px] font-bold text-sm transition-all relative shrink-0 cursor-pointer ${
               selectedSubjectId === 'all' ? 'text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
             }`}
           >
@@ -173,7 +179,7 @@ export default function Lessons({
             <button
               key={sub.id}
               onClick={() => setSelectedSubjectId(sub.id)}
-              className={`px-5 py-2.5 rounded-[14px] font-bold text-sm transition-all relative shrink-0 ${
+              className={`px-5 py-2.5 rounded-[14px] font-bold text-sm transition-all relative shrink-0 cursor-pointer ${
                 selectedSubjectId === sub.id ? 'text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
               }`}
             >
@@ -207,7 +213,9 @@ export default function Lessons({
                 key={sub.id}
                 variants={itemVariants}
                 onClick={() => setSelectedAdminSubjectId?.(sub.id)}
-                className="glass border border-[var(--border)] rounded-3xl p-8 hover:border-orange-500/30 transition-all cursor-pointer group flex flex-col justify-between h-56 hover:shadow-2xl hover:shadow-orange-600/5"
+                className={`border rounded-3xl p-8 transition-all cursor-pointer group flex flex-col justify-between h-56 hover:shadow-2xl hover:shadow-orange-600/5 ${
+                  isDarkMode ? 'glass border-[var(--border)] hover:border-orange-500/30' : 'bg-white border-zinc-200 hover:border-orange-500/35 hover:shadow-zinc-200/50 shadow-sm'
+                }`}
               >
                 <div>
                   <div className="flex justify-between items-center mb-4">
@@ -245,7 +253,9 @@ export default function Lessons({
               <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="md:col-span-2 lg:col-span-3 text-center py-20 glass border border-[var(--border)] rounded-[32px] max-w-lg mx-auto relative overflow-hidden group hover:border-orange-500/30 transition-all duration-300"
+                className={`md:col-span-2 lg:col-span-3 text-center py-20 border rounded-[32px] max-w-lg mx-auto relative overflow-hidden group transition-all duration-300 ${
+                  isDarkMode ? 'glass border-[var(--border)] hover:border-orange-500/30' : 'bg-white border-zinc-200 hover:border-orange-500/35 hover:shadow-zinc-200/50 shadow-sm'
+                }`}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-transparent opacity-50 pointer-events-none" />
                 <div className="w-16 h-16 bg-orange-500/10 text-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
@@ -262,7 +272,9 @@ export default function Lessons({
                     key={lesson.id} 
                     variants={itemVariants}
                     layout
-                    className="glass border border-[var(--border)] rounded-3xl overflow-hidden group hover:border-orange-500/30 transition-all shadow-lg hover:shadow-orange-600/5 flex flex-col justify-between"
+                    className={`border rounded-3xl overflow-hidden group transition-all shadow-lg hover:shadow-orange-600/5 flex flex-col justify-between ${
+                      isDarkMode ? 'glass border-[var(--border)] hover:border-orange-500/30' : 'bg-white border-zinc-200 hover:border-orange-500/35 hover:shadow-zinc-200/50'
+                    }`}
                   >
                     <div className="p-6 space-y-4">
                       {/* Badge de Disciplina e Tipo */}
@@ -305,7 +317,7 @@ export default function Lessons({
                     {lesson.type === 'youtube' && youtubeVideoId ? (
                       <button 
                         onClick={() => setActivePlaybackLesson(lesson)}
-                        className="w-full py-3.5 sidebar-grad text-white text-xs font-extrabold uppercase tracking-widest rounded-xl shadow-lg shadow-orange-600/15 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                        className="w-full py-3.5 sidebar-grad text-white text-xs font-extrabold uppercase tracking-widest rounded-xl shadow-lg shadow-orange-600/15 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
                       >
                         <PlayCircle size={16} />
                         Assistir Aula
@@ -315,7 +327,7 @@ export default function Lessons({
                         href={lesson.url} 
                         target="_blank" 
                         rel="noreferrer"
-                        className="w-full py-3.5 bg-[var(--floating-btn)] hover:opacity-90 text-[var(--text-main)] text-xs font-extrabold uppercase tracking-widest rounded-xl border border-[var(--border)] flex items-center justify-center gap-2 transition-all"
+                        className="w-full py-3.5 bg-[var(--floating-btn)] hover:opacity-90 text-[var(--text-main)] text-xs font-extrabold uppercase tracking-widest rounded-xl border border-[var(--border)] flex items-center justify-center gap-2 transition-all cursor-pointer"
                       >
                         {lesson.type === 'pdf' ? <FileText size={16} /> : <ExternalLink size={16} />}
                         {lesson.type === 'pdf' ? 'Visualizar PDF' : 'Acessar Link'}

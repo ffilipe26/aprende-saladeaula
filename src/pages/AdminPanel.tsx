@@ -34,6 +34,7 @@ interface AdminPanelProps {
   onRemoveNotification: (id: string) => void;
   onMarkAsRead: (id: string) => void;
   onProfileClick: () => void;
+  isDarkMode: boolean;
 }
 
 type TabType = 'teachers' | 'students' | 'subjects';
@@ -50,7 +51,8 @@ export default function AdminPanel({
   notifications,
   onRemoveNotification,
   onMarkAsRead,
-  onProfileClick
+  onProfileClick,
+  isDarkMode
 }: AdminPanelProps) {
   const isTeacher = userRole === 'teacher';
   const [activeTab, setActiveTab] = useState<TabType>(isTeacher ? 'students' : 'teachers');
@@ -309,7 +311,9 @@ export default function AdminPanel({
       {/* Controles de Busca e Abas */}
       <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-6">
         {/* Abas */}
-        <div className="flex gap-2 p-1.5 glass border border-[var(--border)] rounded-[20px] overflow-x-auto">
+        <div className={`flex gap-2 p-1.5 border rounded-[20px] overflow-x-auto transition-all duration-300 ${
+          isDarkMode ? 'glass border border-[var(--border)]' : 'bg-zinc-100 border-zinc-200 shadow-inner'
+        }`}>
           {[
             { id: 'teachers', label: 'Professores', count: teachers.length },
             { id: 'students', label: 'Alunos', count: students.length },
@@ -321,8 +325,10 @@ export default function AdminPanel({
                 setActiveTab(tab.id as TabType);
                 setSearchQuery('');
               }}
-              className={`px-5 py-2.5 rounded-[14px] font-bold text-sm transition-all relative shrink-0 ${
-                activeTab === tab.id ? 'text-white' : 'text-[var(--text-muted)] hover:text-white'
+              className={`px-5 py-2.5 rounded-[14px] font-bold text-sm transition-all relative shrink-0 cursor-pointer ${
+                activeTab === tab.id 
+                  ? 'text-white' 
+                  : (isDarkMode ? 'text-[var(--text-muted)] hover:text-white' : 'text-zinc-550 hover:text-zinc-900')
               }`}
             >
               {activeTab === tab.id && (
@@ -335,7 +341,9 @@ export default function AdminPanel({
               <span className="relative z-10 flex items-center gap-2">
                 {tab.label}
                 <span className={`px-2 py-0.5 rounded-full text-[10px] ${
-                  activeTab === tab.id ? 'bg-white/20' : 'bg-orange-500/10 text-orange-500'
+                  activeTab === tab.id 
+                    ? 'bg-white/20' 
+                    : (isDarkMode ? 'bg-white/5 text-zinc-400' : 'bg-orange-500/10 text-orange-650 font-bold')
                 }`}>
                   {tab.count}
                 </span>
@@ -352,18 +360,24 @@ export default function AdminPanel({
             placeholder="Pesquisar..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="glass border border-[var(--border)] rounded-2xl py-3.5 pl-12 pr-6 w-full md:w-80 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 transition-all text-sm font-medium"
+            className={`border rounded-2xl py-3.5 pl-12 pr-6 w-full md:w-80 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 transition-all text-sm font-medium ${
+              isDarkMode ? 'glass border-[var(--border)] text-white' : 'bg-white border-zinc-200 text-zinc-900 shadow-sm'
+            }`}
           />
         </div>
       </div>
 
       {/* Tabelas de Dados */}
-      <div className="glass border border-[var(--border)] rounded-2xl overflow-hidden shadow-2xl">
+      <div className={`border rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ${
+        isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200/80 shadow-md'
+      }`}>
         <div className="overflow-x-auto">
           {activeTab === 'teachers' && (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-[var(--border)] bg-white/5">
+                <tr className={`border-b transition-all duration-300 ${
+                  isDarkMode ? 'border-[var(--border)] bg-white/5' : 'border-zinc-200 bg-slate-50'
+                }`}>
                   <th className="px-8 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Membro</th>
                   <th className="px-8 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Cadastro</th>
                   <th className="px-8 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider text-right">Ações</th>
@@ -376,7 +390,9 @@ export default function AdminPanel({
                   </tr>
                 ) : (
                   filteredTeachers.map(teacher => (
-                    <tr key={teacher.id} className="hover:bg-white/5 transition-colors group">
+                    <tr key={teacher.id} className={`transition-colors group ${
+                      isDarkMode ? 'hover:bg-white/5' : 'hover:bg-zinc-50'
+                    }`}>
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-4">
                           <div className="h-11 w-11 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center font-bold">
@@ -391,11 +407,13 @@ export default function AdminPanel({
                           </div>
                         </div>
                       </td>
-                      <td className="px-8 py-6 text-xs text-[var(--text-muted)] font-bold">{teacher.joinedAt}</td>
+                      <td className="px-8 py-6 text-xs text-[var(--text-muted)] font-bold">
+                        {teacher.joinedAt ? new Date(teacher.joinedAt).toLocaleDateString('pt-BR') : '—'}
+                      </td>
                       <td className="px-8 py-6 text-right">
                         <button 
                           onClick={() => setMemberToDelete(teacher)}
-                          className="p-2.5 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                          className="p-2.5 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -410,7 +428,9 @@ export default function AdminPanel({
           {activeTab === 'students' && (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-[var(--border)] bg-white/5">
+                <tr className={`border-b transition-all duration-300 ${
+                  isDarkMode ? 'border-[var(--border)] bg-white/5' : 'border-zinc-200 bg-slate-50'
+                }`}>
                   <th className="px-8 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Membro</th>
                   <th className="px-8 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Cadastro</th>
                   <th className="px-8 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider text-right">Ações</th>
@@ -423,7 +443,9 @@ export default function AdminPanel({
                   </tr>
                 ) : (
                   filteredStudents.map(student => (
-                    <tr key={student.id} className="hover:bg-white/5 transition-colors group">
+                    <tr key={student.id} className={`transition-colors group ${
+                      isDarkMode ? 'hover:bg-white/5' : 'hover:bg-zinc-50'
+                    }`}>
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-4">
                           <div className="h-11 w-11 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center font-bold">
@@ -438,12 +460,14 @@ export default function AdminPanel({
                           </div>
                         </div>
                       </td>
-                      <td className="px-8 py-6 text-xs text-[var(--text-muted)] font-bold">{student.joinedAt}</td>
+                      <td className="px-8 py-6 text-xs text-[var(--text-muted)] font-bold">
+                        {student.joinedAt ? new Date(student.joinedAt).toLocaleDateString('pt-BR') : '—'}
+                      </td>
                       <td className="px-8 py-6 text-right">
                         {!isTeacher && (
                           <button 
                             onClick={() => setMemberToDelete(student)}
-                            className="p-2.5 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                            className="p-2.5 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"
                           >
                             <Trash2 size={16} />
                           </button>
@@ -459,7 +483,9 @@ export default function AdminPanel({
           {activeTab === 'subjects' && (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-[var(--border)] bg-white/5">
+                <tr className={`border-b transition-all duration-300 ${
+                  isDarkMode ? 'border-[var(--border)] bg-white/5' : 'border-zinc-200 bg-slate-50'
+                }`}>
                   <th className="px-8 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Código / Nome</th>
                   <th className="px-8 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Professor</th>
                   <th className="px-8 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider text-right">Ações</th>
@@ -472,7 +498,9 @@ export default function AdminPanel({
                   </tr>
                 ) : (
                   filteredSubjects.map(subject => (
-                    <tr key={subject.id} className="hover:bg-white/5 transition-colors group">
+                    <tr key={subject.id} className={`transition-colors group ${
+                      isDarkMode ? 'hover:bg-white/5' : 'hover:bg-zinc-50'
+                    }`}>
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-4">
                           <div className="h-11 w-11 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center font-bold">
@@ -490,7 +518,7 @@ export default function AdminPanel({
                       <td className="px-8 py-6 text-right">
                         <button 
                           onClick={() => handleDeleteSubject(subject.id)}
-                          className="p-2.5 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                          className="p-2.5 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -520,13 +548,17 @@ export default function AdminPanel({
               initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              className="bg-[var(--bg-card)] border border-[var(--border)] w-full max-w-lg rounded-3xl p-8 relative z-10 shadow-2xl flex flex-col gap-6"
+              className={`border w-full max-w-lg rounded-3xl p-8 relative z-10 shadow-2xl flex flex-col gap-6 transition-all duration-300 ${
+                isDarkMode ? 'bg-[var(--bg-card)] border-[var(--border)]' : 'bg-white border-zinc-200 shadow-xl'
+              }`}
             >
               <div className="flex justify-between items-center">
-                <h3 className="text-2xl font-bold font-display">Adicionar Novo Membro</h3>
+                <h3 className={`text-2xl font-bold font-display ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Adicionar Novo Membro</h3>
                 <button 
                   onClick={() => setIsMemberModalOpen(false)}
-                  className="p-2 text-[var(--text-muted)] hover:text-white rounded-lg hover:bg-white/5 transition-all"
+                  className={`p-2 rounded-lg transition-all ${
+                    isDarkMode ? 'text-[var(--text-muted)] hover:text-white hover:bg-white/5' : 'text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100'
+                  }`}
                 >
                   <X size={20} />
                 </button>
@@ -535,12 +567,14 @@ export default function AdminPanel({
               <form onSubmit={handleAddMember} className="space-y-5">
                 <div className="space-y-2">
                   <label className="text-[10px] font-extrabold uppercase text-[var(--text-muted)] tracking-wider">Cargo / Função</label>
-                  <div className="flex gap-2 p-1 bg-zinc-800/80 border border-white/5 rounded-xl">
+                  <div className={`flex gap-2 p-1 border rounded-xl transition-all duration-300 ${
+                    isDarkMode ? 'bg-zinc-800/80 border-white/5' : 'bg-slate-100 border-zinc-200'
+                  }`}>
                     <button 
                       type="button" 
                       onClick={() => setMemberRole('teacher')}
                       className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all ${
-                        memberRole === 'teacher' ? 'bg-orange-600 text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-white'
+                        memberRole === 'teacher' ? 'bg-orange-600 text-white shadow-lg' : (isDarkMode ? 'text-[var(--text-muted)] hover:text-white' : 'text-zinc-500 hover:text-zinc-900')
                       }`}
                     >
                       Professor
@@ -549,7 +583,7 @@ export default function AdminPanel({
                       type="button" 
                       onClick={() => setMemberRole('student')}
                       className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all ${
-                        memberRole === 'student' ? 'bg-orange-600 text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-white'
+                        memberRole === 'student' ? 'bg-orange-600 text-white shadow-lg' : (isDarkMode ? 'text-[var(--text-muted)] hover:text-white' : 'text-zinc-500 hover:text-zinc-900')
                       }`}
                     >
                       Aluno
@@ -565,7 +599,9 @@ export default function AdminPanel({
                     value={memberName}
                     onChange={(e) => setMemberName(e.target.value)}
                     placeholder="Ex: Ana Clara Lima"
-                    className="w-full bg-zinc-900 border border-[var(--border)] rounded-xl py-3 px-4 text-sm font-medium focus:outline-none focus:border-orange-500/50 transition-all text-[var(--text-main)]"
+                    className={`w-full border rounded-xl py-3 px-4 text-sm font-medium focus:outline-none focus:border-orange-500/50 transition-all ${
+                      isDarkMode ? 'bg-zinc-900 border-[var(--border)] text-white placeholder:text-zinc-600' : 'bg-slate-50 border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
+                    }`}
                   />
                 </div>
 
@@ -577,7 +613,9 @@ export default function AdminPanel({
                     value={memberEmail}
                     onChange={(e) => setMemberEmail(e.target.value)}
                     placeholder="Ex: ana.clara@escola.com"
-                    className="w-full bg-zinc-900 border border-[var(--border)] rounded-xl py-3 px-4 text-sm font-medium focus:outline-none focus:border-orange-500/50 transition-all text-[var(--text-main)]"
+                    className={`w-full border rounded-xl py-3 px-4 text-sm font-medium focus:outline-none focus:border-orange-500/50 transition-all ${
+                      isDarkMode ? 'bg-zinc-900 border-[var(--border)] text-white placeholder:text-zinc-600' : 'bg-slate-50 border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
+                    }`}
                   />
                 </div>
 
@@ -589,12 +627,14 @@ export default function AdminPanel({
                       <select
                         value={selectedClassId}
                         onChange={(e) => setSelectedClassId(e.target.value)}
-                        className="w-full bg-black/20 border border-[var(--border)] rounded-2xl py-3.5 pl-12 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 appearance-none font-medium"
+                        className={`w-full border rounded-2xl py-3.5 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 appearance-none font-medium transition-all ${
+                          isDarkMode ? 'bg-black/20 border-[var(--border)] text-white' : 'bg-slate-50 border-zinc-200 text-zinc-900'
+                        }`}
                         required
                       >
                         <option value="">Selecione uma turma</option>
                         {classes.map(c => (
-                          <option key={c.id} value={c.id} className="bg-zinc-900 text-white">
+                          <option key={c.id} value={c.id}>
                             {c.name}
                           </option>
                         ))}
@@ -608,15 +648,18 @@ export default function AdminPanel({
                   <button 
                     type="button" 
                     onClick={() => setIsMemberModalOpen(false)}
-                    className="flex-1 py-3.5 border border-[var(--border)] rounded-xl text-xs font-bold text-[var(--text-muted)] hover:bg-white/5 transition-all text-center"
+                    className={`flex-1 py-3.5 border rounded-xl text-xs font-bold transition-all text-center ${
+                      isDarkMode ? 'border-[var(--border)] text-[var(--text-muted)] hover:bg-white/5' : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50'
+                    }`}
                   >
                     Cancelar
                   </button>
                   <button 
                     type="submit" 
-                    className="flex-1 py-3.5 sidebar-grad text-white rounded-xl text-xs font-extrabold shadow-lg shadow-orange-600/10 hover:scale-[1.02] active:scale-[0.98] transition-all text-center"
+                    disabled={isLoading}
+                    className="flex-1 py-3.5 sidebar-grad text-white rounded-xl text-xs font-extrabold shadow-lg shadow-orange-600/10 hover:scale-[1.02] active:scale-[0.98] transition-all text-center disabled:opacity-50"
                   >
-                    Confirmar Cadastro
+                    {isLoading ? 'Cadastrando...' : 'Confirmar Cadastro'}
                   </button>
                 </div>
               </form>
@@ -641,13 +684,17 @@ export default function AdminPanel({
               initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              className="bg-[var(--bg-card)] border border-[var(--border)] w-full max-w-lg rounded-3xl p-8 relative z-10 shadow-2xl flex flex-col gap-6"
+              className={`border w-full max-w-lg rounded-3xl p-8 relative z-10 shadow-2xl flex flex-col gap-6 transition-all duration-300 ${
+                isDarkMode ? 'bg-[var(--bg-card)] border-[var(--border)]' : 'bg-white border-zinc-200 shadow-xl'
+              }`}
             >
               <div className="flex justify-between items-center">
-                <h3 className="text-2xl font-bold font-display">Criar Nova Disciplina</h3>
+                <h3 className={`text-2xl font-bold font-display ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Criar Nova Disciplina</h3>
                 <button 
                   onClick={() => setIsSubjectModalOpen(false)}
-                  className="p-2 text-[var(--text-muted)] hover:text-white rounded-lg hover:bg-white/5 transition-all"
+                  className={`p-2 rounded-lg transition-all ${
+                    isDarkMode ? 'text-[var(--text-muted)] hover:text-white hover:bg-white/5' : 'text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100'
+                  }`}
                 >
                   <X size={20} />
                 </button>
@@ -662,7 +709,9 @@ export default function AdminPanel({
                     value={subjectCode}
                     onChange={(e) => setSubjectCode(e.target.value)}
                     placeholder="Ex: PROG-202"
-                    className="w-full bg-zinc-900 border border-[var(--border)] rounded-xl py-3 px-4 text-sm font-medium focus:outline-none focus:border-orange-500/50 transition-all text-[var(--text-main)] uppercase"
+                    className={`w-full border rounded-xl py-3 px-4 text-sm font-medium focus:outline-none focus:border-orange-500/50 transition-all uppercase ${
+                      isDarkMode ? 'bg-zinc-900 border-[var(--border)] text-white placeholder:text-zinc-600' : 'bg-slate-50 border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
+                    }`}
                   />
                 </div>
 
@@ -674,7 +723,9 @@ export default function AdminPanel({
                     value={subjectName}
                     onChange={(e) => setSubjectName(e.target.value)}
                     placeholder="Ex: Introdução à Programação Orientada a Objetos"
-                    className="w-full bg-zinc-900 border border-[var(--border)] rounded-xl py-3 px-4 text-sm font-medium focus:outline-none focus:border-orange-500/50 transition-all text-[var(--text-main)]"
+                    className={`w-full border rounded-xl py-3 px-4 text-sm font-medium focus:outline-none focus:border-orange-500/50 transition-all ${
+                      isDarkMode ? 'bg-zinc-900 border-[var(--border)] text-white placeholder:text-zinc-600' : 'bg-slate-50 border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
+                    }`}
                   />
                 </div>
 
@@ -684,7 +735,9 @@ export default function AdminPanel({
                     <select 
                       value={subjectTeacherId}
                       onChange={(e) => setSubjectTeacherId(e.target.value)}
-                      className="w-full bg-zinc-900 border border-[var(--border)] rounded-xl py-3 px-4 text-sm font-medium focus:outline-none focus:border-orange-500/50 transition-all text-[var(--text-main)] appearance-none pr-10"
+                      className={`w-full border rounded-xl py-3 px-4 text-sm font-medium focus:outline-none focus:border-orange-500/50 transition-all appearance-none pr-10 ${
+                        isDarkMode ? 'bg-zinc-900 border-[var(--border)] text-white' : 'bg-slate-50 border-zinc-200 text-zinc-900'
+                      }`}
                     >
                       <option value="">Selecione um professor...</option>
                       {teachers.map(t => (
@@ -699,7 +752,9 @@ export default function AdminPanel({
                   <button 
                     type="button" 
                     onClick={() => setIsSubjectModalOpen(false)}
-                    className="flex-1 py-3.5 border border-[var(--border)] rounded-xl text-xs font-bold text-[var(--text-muted)] hover:bg-white/5 transition-all text-center"
+                    className={`flex-1 py-3.5 border rounded-xl text-xs font-bold transition-all text-center ${
+                      isDarkMode ? 'border-[var(--border)] text-[var(--text-muted)] hover:bg-white/5' : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50'
+                    }`}
                   >
                     Cancelar
                   </button>

@@ -81,7 +81,7 @@ export default function Header({
           {/* Botão de Notificações */}
           <button 
             onClick={() => setShowNotifications(!showNotifications)}
-            className="p-3 glass border border-[var(--border)] rounded-2xl text-[var(--text-muted)] hover:text-white hover:scale-105 transition-all relative"
+            className="p-3 glass border border-[var(--border)] rounded-2xl text-[var(--text-muted)] hover:text-[var(--text-main)] hover:scale-105 transition-all relative"
           >
             <Bell size={20} />
             {unreadCount > 0 && (
@@ -115,7 +115,7 @@ export default function Header({
                       {notifications.map((notification) => (
                         <div 
                           key={notification.id}
-                          className={`p-4 hover:bg-white/5 transition-colors relative group ${!notification.read ? 'bg-orange-500/[0.02]' : ''}`}
+                          className={`p-4 hover:bg-black/[0.03] dark:hover:bg-white/5 transition-colors relative group ${!notification.read ? 'bg-orange-500/[0.02]' : ''}`}
                         >
                           <div className="flex gap-3">
                             <div className="mt-1 shrink-0">
@@ -169,9 +169,9 @@ export default function Header({
           {/* Botão de Perfil */}
           <div 
             onClick={onProfileClick}
-            className="flex items-center gap-3 glass border border-[var(--border)] p-1.5 pr-4 rounded-2xl hover:bg-white/5 transition-all cursor-pointer group"
+            className="flex items-center gap-3 glass border border-[var(--border)] p-1.5 pr-4 rounded-2xl hover:bg-black/[0.03] dark:hover:bg-white/5 transition-all cursor-pointer group"
           >
-            <div className="h-9 w-9 rounded-xl bg-zinc-800 flex items-center justify-center text-orange-500 group-hover:scale-105 transition-transform">
+            <div className="h-9 w-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-orange-500 group-hover:scale-105 transition-transform">
               <User size={20} />
             </div>
             <div className="hidden sm:flex flex-col items-start">

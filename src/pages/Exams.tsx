@@ -24,6 +24,7 @@ interface ExamsProps {
   userRole?: string;
   onReload?: () => void;
   onNavigate?: (section: string) => void;
+  isDarkMode: boolean;
 }
 
 const Exams = ({ 
@@ -42,7 +43,8 @@ const Exams = ({
   subjects = [],
   userRole,
   onReload,
-  onNavigate
+  onNavigate,
+  isDarkMode
 }: ExamsProps) => {
   // ==========================================
   // ESTADOS LOCAIS
@@ -185,7 +187,9 @@ const Exams = ({
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass border border-[var(--border)] rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-6"
+          className={`border rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-6 transition-all duration-300 ${
+            isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200/80 shadow-md shadow-zinc-150/30'
+          }`}
         >
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 bg-orange-500/10 text-orange-500 rounded-xl flex items-center justify-center">
@@ -200,7 +204,7 @@ const Exams = ({
             <select
               value={selectedAdminSubjectId || 'all'}
               onChange={(e) => setSelectedAdminSubjectId(e.target.value === 'all' ? null : e.target.value)}
-              className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-xl py-3 px-5 text-xs font-bold text-[var(--text-main)] appearance-none pr-12 focus:outline-none focus:border-orange-500/50 transition-all"
+              className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-xl py-3 px-5 text-xs font-bold text-[var(--text-main)] appearance-none pr-12 focus:outline-none focus:border-orange-500/50 transition-all cursor-pointer"
             >
               <option value="all">Ver Todas as Turmas (Grid)</option>
               {subjects.map(sub => (
@@ -229,7 +233,9 @@ const Exams = ({
                 key={sub.id}
                 variants={item}
                 onClick={() => setSelectedAdminSubjectId?.(sub.id)}
-                className="glass border border-[var(--border)] rounded-3xl p-8 hover:border-orange-500/30 transition-all cursor-pointer group flex flex-col justify-between h-56 hover:shadow-2xl hover:shadow-orange-600/5"
+                className={`border rounded-3xl p-8 transition-all cursor-pointer group flex flex-col justify-between h-56 hover:shadow-2xl hover:shadow-orange-600/5 ${
+                  isDarkMode ? 'glass border-[var(--border)] hover:border-orange-500/30' : 'bg-white border-zinc-200 hover:border-orange-500/35 hover:shadow-zinc-200/50 shadow-sm'
+                }`}
               >
                 <div>
                   <div className="flex justify-between items-center mb-4">
@@ -273,7 +279,9 @@ const Exams = ({
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="lg:col-span-2 text-center py-20 glass border border-[var(--border)] rounded-[32px] max-w-lg mx-auto relative overflow-hidden group hover:border-orange-500/30 transition-all duration-300"
+                    className={`lg:col-span-2 text-center py-20 border rounded-[32px] max-w-lg mx-auto relative overflow-hidden group transition-all duration-300 ${
+                      isDarkMode ? 'glass border-[var(--border)] hover:border-orange-500/30' : 'bg-white border-zinc-200 hover:border-orange-500/35 hover:shadow-zinc-200/50 shadow-sm'
+                    }`}
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-transparent opacity-50 pointer-events-none" />
                     <div className="w-16 h-16 bg-orange-500/10 text-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
@@ -288,7 +296,9 @@ const Exams = ({
                       key={exam.id} 
                       variants={item}
                       layout
-                      className="glass border border-[var(--border)] rounded-2xl overflow-hidden group hover:border-orange-500/30 transition-all shadow-lg hover:shadow-orange-600/5"
+                      className={`border rounded-2xl overflow-hidden group transition-all shadow-lg hover:shadow-orange-600/5 ${
+                        isDarkMode ? 'glass border-[var(--border)] hover:border-orange-500/30' : 'bg-white border-zinc-200 hover:border-orange-500/35 hover:shadow-zinc-200/50'
+                      }`}
                     >
                       <div className="h-64 overflow-hidden relative bg-zinc-900 flex items-center justify-center">
                         {exam.image ? (
@@ -311,7 +321,9 @@ const Exams = ({
                                 e.stopPropagation();
                                 setExamToDelete(exam.id);
                               }}
-                              className="p-3 glass border border-white/10 rounded-2xl text-white hover:bg-red-500 transition-all"
+                              className={`p-3 border rounded-2xl text-white hover:bg-red-500 transition-all cursor-pointer ${
+                                isDarkMode ? 'glass border-white/10' : 'bg-black/40 border-black/10 hover:border-red-500'
+                              }`}
                             >
                               <Trash2 size={16} />
                             </button>
@@ -394,7 +406,9 @@ const Exams = ({
                   <motion.div
                     key={exam.id}
                     variants={item}
-                    className="glass border border-red-500/20 rounded-2xl overflow-hidden opacity-80"
+                    className={`border rounded-2xl overflow-hidden opacity-80 transition-all duration-300 ${
+                      isDarkMode ? 'glass border-red-500/20' : 'bg-white border-red-200 shadow-sm'
+                    }`}
                   >
                     <div className="h-32 overflow-hidden relative bg-zinc-900/60 flex items-center justify-center">
                       {exam.image ? (
@@ -412,7 +426,9 @@ const Exams = ({
                         <div className="absolute top-4 right-4">
                           <button
                             onClick={(e) => { e.stopPropagation(); setExamToDelete(exam.id); }}
-                            className="p-2 glass border border-white/10 rounded-xl text-white hover:bg-red-500 transition-all"
+                            className={`p-2 border rounded-xl text-white hover:bg-red-500 transition-all cursor-pointer ${
+                              isDarkMode ? 'glass border-white/10' : 'bg-black/40 border-black/10 hover:border-red-500'
+                            }`}
                           >
                             <Trash2 size={14} />
                           </button>
@@ -449,16 +465,20 @@ const Exams = ({
           <section>
             <div className="flex items-center justify-between mb-10 px-2">
               <h2 className="text-2xl font-extrabold font-display">Histórico de Provas</h2>
-              <button className="text-orange-500 text-sm font-bold hover:underline flex items-center gap-2 group">
+              <button className="text-orange-500 text-sm font-bold hover:underline flex items-center gap-2 group cursor-pointer">
                 Ver relatório completo <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
             
-            <motion.div variants={item} className="glass border border-[var(--border)] rounded-2xl overflow-hidden">
+            <motion.div variants={item} className={`border rounded-2xl overflow-hidden transition-all duration-300 ${
+              isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200 shadow-md shadow-zinc-150/20'
+            }`}>
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
-                    <tr className="border-b border-[var(--border)] bg-[var(--border)]/10">
+                    <tr className={`border-b transition-colors duration-300 ${
+                      isDarkMode ? 'border-white/5 bg-black/20' : 'border-zinc-200 bg-slate-50'
+                    }`}>
                       <th className="px-10 py-8 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-[0.2em]">Prova</th>
                       <th className="px-10 py-8 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-[0.2em]">Matéria</th>
                       <th className="px-10 py-8 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-[0.2em]">Data</th>
@@ -473,7 +493,9 @@ const Exams = ({
                       </tr>
                     ) : (
                       completedExams.map((exam) => (
-                        <tr key={exam.id} className="hover:bg-[var(--border)]/30 transition-colors group">
+                        <tr key={exam.id} className={`transition-colors group ${
+                          isDarkMode ? 'hover:bg-white/5' : 'hover:bg-zinc-50'
+                        }`}>
                           <td className="px-10 py-8">
                             <div className="flex items-center gap-4">
                               <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500">
@@ -483,9 +505,11 @@ const Exams = ({
                             </div>
                           </td>
                           <td className="px-10 py-8">
-                             <span className="text-[10px] font-extrabold bg-[var(--border)] text-[var(--text-main)] px-3 py-1 rounded-full uppercase tracking-widest border border-[var(--border)]">{exam.subject}</span>
+                             <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest border transition-colors duration-300 ${
+                               isDarkMode ? 'bg-white/5 border-white/5 text-zinc-355' : 'bg-zinc-100 border-zinc-200 text-zinc-700'
+                             }`}>{exam.subject}</span>
                           </td>
-                      <td className="px-10 py-8 text-sm text-[var(--text-muted)] font-bold uppercase tracking-widest">{exam.submittedAt ? new Date(exam.submittedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</td>
+                          <td className="px-10 py-8 text-sm text-[var(--text-muted)] font-bold uppercase tracking-widest">{exam.submittedAt ? new Date(exam.submittedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</td>
                           <td className="px-10 py-8">
                             <div className="flex items-center gap-3">
                               <div className={`w-2 h-2 rounded-full ${parseFloat(exam.grade || '0') >= 7 ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-red-500 shadow-lg shadow-red-500/50'}`} />
@@ -497,7 +521,7 @@ const Exams = ({
                           <td className="px-10 py-8 text-right">
                             <button 
                               onClick={() => onStartExam(exam.id)}
-                              className="text-sm font-extrabold text-orange-500 hover:text-orange-400 transition-all flex items-center gap-2 ml-auto group/link"
+                              className="text-sm font-extrabold text-orange-500 hover:text-orange-400 transition-all flex items-center gap-2 ml-auto group/link cursor-pointer"
                             >
                               Ver Detalhes <ArrowUpRight size={16} className="group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
                             </button>
@@ -518,7 +542,9 @@ const Exams = ({
                       <div className="flex justify-between items-start">
                         <div className="space-y-2">
                            <h4 className="text-lg font-bold text-[var(--text-main)] leading-tight">{exam.title}</h4>
-                           <span className="text-[9px] font-extrabold bg-[var(--border)] text-[var(--text-main)] px-3 py-1 rounded-full uppercase tracking-widest inline-block border border-[var(--border)]">{exam.subject}</span>
+                           <span className={`text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-widest inline-block border transition-colors duration-300 ${
+                             isDarkMode ? 'bg-white/5 border-white/5 text-zinc-355' : 'bg-zinc-100 border-zinc-200 text-zinc-700'
+                           }`}>{exam.subject}</span>
                         </div>
                         <div className="text-right">
                           <p className="text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest mb-1">Nota</p>
@@ -531,7 +557,7 @@ const Exams = ({
                         <span className="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest">{exam.submittedAt ? new Date(exam.submittedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</span>
                         <button 
                           onClick={() => onStartExam(exam.id)}
-                          className="text-sm font-extrabold text-orange-500 flex items-center gap-1"
+                          className="text-sm font-extrabold text-orange-500 flex items-center gap-1 cursor-pointer"
                         >
                           Ver Detalhes <ArrowUpRight size={14} />
                         </button>

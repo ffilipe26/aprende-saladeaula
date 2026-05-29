@@ -31,6 +31,7 @@ interface SidebarProps {
   userRole: UserRole;
   userName: string;
   userEmail: string;
+  isDarkMode: boolean;
 }
 
 export default function Sidebar({ 
@@ -42,7 +43,8 @@ export default function Sidebar({
   onLogout,
   userRole,
   userName,
-  userEmail
+  userEmail,
+  isDarkMode
 }: SidebarProps) {
   // ==========================================
   // CONFIGURAÇÃO DOS ITENS DO MENU
@@ -111,7 +113,7 @@ export default function Sidebar({
         {/* Botão de Fechar (Apenas Mobile) */}
         <button 
           onClick={onCloseMobile}
-          className="md:hidden ml-auto p-2 text-[var(--text-muted)] hover:text-white"
+          className="md:hidden ml-auto p-2 text-[var(--text-muted)] hover:text-[var(--text-main)]"
         >
           <X size={24} />
         </button>
@@ -142,7 +144,7 @@ export default function Sidebar({
                         "relative flex items-center p-3.5 rounded-2xl cursor-pointer transition-all duration-300 group",
                         isActive 
                           ? "text-white" 
-                          : "text-[var(--text-muted)] hover:bg-white/5 hover:text-white"
+                          : (isDarkMode ? "text-[var(--text-muted)] hover:bg-white/5 hover:text-white" : "text-[var(--text-muted)] hover:bg-slate-100 hover:text-zinc-900")
                       )}
                     >
                       {isActive && (
@@ -178,13 +180,17 @@ export default function Sidebar({
       {/* Rodapé da Sidebar (Botão de Sair) */}
       <div className="mt-auto pt-6 border-t border-[var(--border)] flex flex-col gap-4">
         {!isCollapsed && (
-          <div className="flex items-center gap-3 p-3 bg-white/5 border border-white/5 rounded-2xl">
+          <div className={`flex items-center gap-3 p-3 border rounded-2xl transition-all duration-300 ${
+            isDarkMode 
+              ? 'bg-white/5 border-white/5' 
+              : 'bg-slate-100/50 border-zinc-200'
+          }`}>
             <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center font-bold font-display uppercase shrink-0">
               {userName ? userName.charAt(0) : 'U'}
             </div>
             <div className="overflow-hidden min-w-0">
               <p className="font-bold text-sm truncate text-[var(--text-main)] leading-tight">{userName}</p>
-              <p className="text-[9px] font-extrabold text-orange-500 uppercase tracking-widest mt-1">
+              <p className="text-[9px] text-orange-500 uppercase tracking-widest mt-1 font-extrabold">
                 {(userRole === 'admin' || userRole === 'super_admin') ? 'Administrador' : userRole === 'teacher' ? 'Professor' : 'Aluno'}
               </p>
             </div>

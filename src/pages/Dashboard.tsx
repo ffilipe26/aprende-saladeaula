@@ -14,6 +14,7 @@ interface DashboardProps {
   notifications: Notification[];
   onRemoveNotification: (id: string) => void;
   onMarkAsRead: (id: string) => void;
+  isDarkMode: boolean;
 }
 
 export default function Dashboard({ 
@@ -26,7 +27,8 @@ export default function Dashboard({
   onProfileClick,
   notifications,
   onRemoveNotification,
-  onMarkAsRead
+  onMarkAsRead,
+  isDarkMode
 }: DashboardProps) {
   // ==========================================
   // LÓGICA DE DADOS
@@ -115,24 +117,44 @@ export default function Dashboard({
           <motion.div variants={item} className="lg:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div 
               onClick={onCreateActivity}
-              className="glass border border-orange-500/30 rounded-[32px] p-8 cursor-pointer hover:bg-orange-500/5 transition-colors group flex items-center gap-6"
+              className={`border rounded-[32px] p-8 cursor-pointer transition-all duration-200 group flex items-center gap-6 ${
+                isDarkMode 
+                  ? 'glass border-orange-500/30 hover:bg-orange-500/5' 
+                  : 'bg-white border-orange-500/25 hover:bg-orange-50/30 shadow-md shadow-orange-100/10'
+              }`}
             >
               <div className="w-16 h-16 rounded-2xl bg-orange-500/20 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform">
                 <PlusCircle size={32} />
               </div>
               <div>
-                <h3 className="text-2xl font-bold font-display text-white">Criar Nova Atividade</h3>
-                <p className="text-zinc-400 font-medium mt-1">Elabore provas ou exercícios com correção automática</p>
+                <h3 className={`text-2xl font-bold font-display transition-colors duration-300 ${
+                  isDarkMode ? 'text-white' : 'text-zinc-850'
+                }`}>Criar Nova Atividade</h3>
+                <p className={`font-medium mt-1 transition-colors duration-300 ${
+                  isDarkMode ? 'text-zinc-400' : 'text-zinc-550'
+                }`}>Elabore provas ou exercícios com correção automática</p>
               </div>
             </div>
 
-            <div className="glass border border-white/10 rounded-[32px] p-8 cursor-pointer hover:border-white/20 transition-colors group flex items-center gap-6">
-              <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-zinc-300 group-hover:scale-110 transition-transform">
+            <div 
+              className={`border rounded-[32px] p-8 cursor-pointer transition-all duration-200 group flex items-center gap-6 ${
+                isDarkMode 
+                  ? 'glass border-white/10 hover:border-white/20' 
+                  : 'bg-white border-zinc-200 hover:border-zinc-300 shadow-md shadow-zinc-100/10'
+              }`}
+            >
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-200 group-hover:scale-110 ${
+                isDarkMode ? 'bg-white/5 text-zinc-300' : 'bg-slate-100 text-zinc-650'
+              }`}>
                 <ClipboardList size={32} />
               </div>
               <div>
-                <h3 className="text-2xl font-bold font-display text-white">Ver Submissões</h3>
-                <p className="text-zinc-400 font-medium mt-1">Corrija questões dissertativas e acompanhe notas</p>
+                <h3 className={`text-2xl font-bold font-display transition-colors duration-300 ${
+                  isDarkMode ? 'text-white' : 'text-zinc-850'
+                }`}>Ver Submissões</h3>
+                <p className={`font-medium mt-1 transition-colors duration-300 ${
+                  isDarkMode ? 'text-zinc-400' : 'text-zinc-550'
+                }`}>Corrija questões dissertativas e acompanhe notas</p>
               </div>
             </div>
           </motion.div>
@@ -167,7 +189,9 @@ export default function Dashboard({
                       <span>2d</span>
                     </div>
                   </div>
-                  <h3 className="font-bold text-sm line-clamp-1 group-hover:text-white transition-colors">{activity.title}</h3>
+                  <h3 className={`font-bold text-sm line-clamp-1 transition-colors ${
+                    isDarkMode ? 'group-hover:text-white' : 'group-hover:text-zinc-900'
+                  }`}>{activity.title}</h3>
                 </div>
                 <div className="ml-4 w-8 h-8 sidebar-grad rounded-lg flex items-center justify-center text-white shrink-0 shadow-lg shadow-orange-600/10">
                   <ChevronRight size={16} />
@@ -196,7 +220,7 @@ export default function Dashboard({
             <p className="text-sm text-[var(--text-muted)] leading-relaxed font-medium mb-6">Não esqueça de enviar o relatório final do projeto de Algoritmos e Estruturas de Dados.</p>
             <button 
               onClick={onOpenCalendar}
-              className="w-full py-3.5 rounded-2xl border border-[var(--border)] text-sm font-bold hover:bg-white/5 transition-all flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-2xl border border-[var(--border)] text-sm font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-all flex items-center justify-center gap-2"
             >
               Ver Calendário <ArrowUpRight size={16} />
             </button>
@@ -205,14 +229,22 @@ export default function Dashboard({
           {/* Card Premium */}
           <motion.div 
             variants={item}
-            className="bg-zinc-900 rounded-[32px] p-8 relative overflow-hidden group border border-white/5"
+            className={`rounded-[32px] p-8 relative overflow-hidden group border transition-all duration-300 ${
+              isDarkMode 
+                ? 'bg-zinc-900 border-white/5' 
+                : 'bg-white border-zinc-200 shadow-xl shadow-zinc-200/40'
+            }`}
           >
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-4">
                 <Zap size={20} className="text-orange-500 fill-orange-500" />
-                <h3 className="text-xl font-extrabold text-white font-display">Plano Premium</h3>
+                <h3 className={`text-xl font-extrabold font-display transition-colors duration-300 ${
+                  isDarkMode ? 'text-white' : 'text-zinc-850'
+                }`}>Plano Premium</h3>
               </div>
-              <p className="text-zinc-500 text-sm mb-6 font-medium">Desbloqueie cursos exclusivos e mentorias personalizadas com especialistas.</p>
+              <p className={`text-sm mb-6 font-medium transition-colors duration-300 ${
+                isDarkMode ? 'text-zinc-500' : 'text-zinc-600'
+              }`}>Desbloqueie cursos exclusivos e mentorias personalizadas com especialistas.</p>
               <button className="sidebar-grad text-white px-8 py-3.5 rounded-2xl font-extrabold text-sm hover:shadow-2xl hover:shadow-orange-600/30 transition-all hover:scale-105 active:scale-95">
                 Fazer Upgrade
               </button>

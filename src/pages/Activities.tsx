@@ -24,6 +24,7 @@ interface ActivitiesProps {
   onNavigate?: (section: string) => void;
   userRole?: string;
   onReload?: () => void;
+  isDarkMode: boolean;
 }
 
 const Activities = ({ 
@@ -42,7 +43,8 @@ const Activities = ({
   subjects = [],
   onNavigate,
   userRole,
-  onReload
+  onReload,
+  isDarkMode
 }: ActivitiesProps) => {
   // ==========================================
   // ESTADOS LOCAIS
@@ -115,7 +117,9 @@ const Activities = ({
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass border border-[var(--border)] rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-6"
+          className={`border rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-6 transition-all duration-300 ${
+            isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200/80 shadow-md shadow-zinc-150/30'
+          }`}
         >
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 bg-orange-500/10 text-orange-500 rounded-xl flex items-center justify-center">
@@ -130,7 +134,7 @@ const Activities = ({
             <select
               value={selectedAdminSubjectId || 'all'}
               onChange={(e) => setSelectedAdminSubjectId(e.target.value === 'all' ? null : e.target.value)}
-              className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-xl py-3 px-5 text-xs font-bold text-[var(--text-main)] appearance-none pr-12 focus:outline-none focus:border-orange-500/50 transition-all"
+              className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-xl py-3 px-5 text-xs font-bold text-[var(--text-main)] appearance-none pr-12 focus:outline-none focus:border-orange-500/50 transition-all cursor-pointer"
             >
               <option value="all">Ver Todas as Turmas (Grid)</option>
               {subjects.map(sub => (
@@ -146,10 +150,12 @@ const Activities = ({
       {(!isAdminView || selectedAdminSubjectId !== null) && (
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
           {userRole !== 'teacher' && (
-            <div className="flex gap-2 p-1.5 glass border border-[var(--border)] rounded-[20px] w-full md:w-auto">
+            <div className={`flex gap-2 p-1.5 border rounded-[20px] w-full md:w-auto transition-all duration-300 ${
+              isDarkMode ? 'glass border-[var(--border)]' : 'bg-zinc-100 border-zinc-200 shadow-inner'
+            }`}>
               <button 
                 onClick={() => setActiveTab('pendentes')}
-                className={`flex-1 md:flex-none px-6 py-2.5 rounded-[14px] font-bold text-sm transition-all relative ${
+                className={`flex-1 md:flex-none px-6 py-2.5 rounded-[14px] font-bold text-sm transition-all relative cursor-pointer ${
                 activeTab === 'pendentes' 
                   ? 'text-white' 
                   : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
@@ -171,7 +177,7 @@ const Activities = ({
             </button>
             <button 
               onClick={() => setActiveTab('concluidas')}
-              className={`flex-1 md:flex-none px-6 py-2.5 rounded-[14px] font-bold text-sm transition-all relative ${
+              className={`flex-1 md:flex-none px-6 py-2.5 rounded-[14px] font-bold text-sm transition-all relative cursor-pointer ${
                 activeTab === 'concluidas' 
                   ? 'text-white' 
                   : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
@@ -198,7 +204,7 @@ const Activities = ({
                   onNavigate('activity_creator');
                 }
               }}
-              className="sidebar-grad text-white px-8 py-3.5 rounded-2xl font-extrabold flex items-center gap-2 shadow-xl shadow-orange-600/20 transition-all w-full md:w-auto justify-center"
+              className="sidebar-grad text-white px-8 py-3.5 rounded-2xl font-extrabold flex items-center gap-2 shadow-xl shadow-orange-600/20 transition-all w-full md:w-auto justify-center cursor-pointer"
             >
               <Plus size={20} />
               Criar Atividade
@@ -224,7 +230,9 @@ const Activities = ({
                 key={sub.id}
                 variants={item}
                 onClick={() => setSelectedAdminSubjectId?.(sub.id)}
-                className="glass border border-[var(--border)] rounded-3xl p-8 hover:border-orange-500/30 transition-all cursor-pointer group flex flex-col justify-between h-56 hover:shadow-2xl hover:shadow-orange-600/5"
+                className={`border rounded-3xl p-8 transition-all cursor-pointer group flex flex-col justify-between h-56 hover:shadow-2xl hover:shadow-orange-600/5 ${
+                  isDarkMode ? 'glass border-[var(--border)] hover:border-orange-500/30' : 'bg-white border-zinc-200 hover:border-orange-500/35 hover:shadow-zinc-200/50 shadow-sm'
+                }`}
               >
                 <div>
                   <div className="flex justify-between items-center mb-4">
@@ -262,7 +270,9 @@ const Activities = ({
               <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="text-center py-20 glass border border-[var(--border)] rounded-[32px] max-w-lg mx-auto relative overflow-hidden group hover:border-orange-500/30 transition-all duration-300"
+                className={`text-center py-20 border rounded-[32px] max-w-lg mx-auto relative overflow-hidden group transition-all duration-300 ${
+                  isDarkMode ? 'glass border-[var(--border)] hover:border-orange-500/30' : 'bg-white border-zinc-200 hover:border-orange-500/35 hover:shadow-zinc-200/50 shadow-sm'
+                }`}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-transparent opacity-50 pointer-events-none" />
                 <div className="w-16 h-16 bg-orange-500/10 text-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
@@ -285,9 +295,13 @@ const Activities = ({
                   key={activity.id} 
                   variants={item}
                   layout
-                  className="glass border border-[var(--border)] rounded-2xl p-6 flex flex-col md:flex-row gap-6 group hover:border-orange-500/30 transition-all shadow-lg hover:shadow-orange-600/5"
+                  className={`border rounded-2xl p-6 flex flex-col md:flex-row gap-6 group transition-all shadow-lg hover:shadow-orange-600/5 ${
+                    isDarkMode ? 'glass border-[var(--border)] hover:border-orange-500/30' : 'bg-white border-zinc-200 hover:border-orange-500/35 hover:shadow-zinc-200/50'
+                  }`}
                 >
-                  <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 border border-[var(--border)] relative bg-white/5 flex items-center justify-center">
+                  <div className={`w-16 h-16 rounded-2xl overflow-hidden shrink-0 border relative flex items-center justify-center transition-colors duration-300 ${
+                    isDarkMode ? 'bg-white/5 border-[var(--border)]' : 'bg-slate-100 border-zinc-200'
+                  }`}>
                     <BookOpen size={24} className="text-orange-500/50" />
                   </div>
                   
@@ -304,7 +318,7 @@ const Activities = ({
                               e.stopPropagation();
                               setActivityToDelete(activity.id);
                             }}
-                            className="p-1.5 text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                            className="p-1.5 text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -342,14 +356,16 @@ const Activities = ({
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => onStartActivity(activity.id)}
-                            className="w-10 h-10 sidebar-grad text-white rounded-xl flex items-center justify-center shadow-lg shadow-orange-600/20 transition-all"
+                            className="w-10 h-10 sidebar-grad text-white rounded-xl flex items-center justify-center shadow-lg shadow-orange-600/20 transition-all cursor-pointer"
                           >
                             <ChevronRight size={20} />
                           </motion.button>
                         ) : (
                           <button 
                             onClick={() => onStartActivity(activity.id)}
-                            className="bg-[var(--border)] text-[var(--text-main)] px-4 py-2 rounded-xl text-[10px] font-extrabold uppercase tracking-widest hover:opacity-90 transition-all border border-[var(--border)]"
+                            className={`px-4 py-2 rounded-xl text-[10px] font-extrabold uppercase tracking-widest hover:opacity-90 transition-all border cursor-pointer ${
+                              isDarkMode ? 'bg-[var(--border)] text-[var(--text-main)] border-[var(--border)]' : 'bg-zinc-150 border-zinc-300 text-zinc-800'
+                            }`}
                           >
                             Revisão
                           </button>

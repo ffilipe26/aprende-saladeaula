@@ -30,6 +30,7 @@ interface InsightsProps {
   onProfileClick: () => void;
   selectedAdminSubjectId?: string | null;
   setSelectedAdminSubjectId?: (id: string | null) => void;
+  isDarkMode: boolean;
 }
 
 export default function Insights({
@@ -43,7 +44,8 @@ export default function Insights({
   onMarkAsRead,
   onProfileClick,
   selectedAdminSubjectId,
-  setSelectedAdminSubjectId
+  setSelectedAdminSubjectId,
+  isDarkMode
 }: InsightsProps) {
   // ==========================================
   // FRAMER MOTION CONFIG
@@ -84,7 +86,9 @@ export default function Insights({
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="glass border border-[var(--border)] rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-6"
+            className={`border rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-6 transition-all duration-300 ${
+              isDarkMode ? 'glass border border-[var(--border)]' : 'bg-white border-zinc-200/80 shadow-md shadow-zinc-150/30'
+            }`}
           >
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 bg-orange-500/10 text-orange-500 rounded-xl flex items-center justify-center">
@@ -99,7 +103,7 @@ export default function Insights({
               <select
                 value={selectedAdminSubjectId || 'all'}
                 onChange={(e) => setSelectedAdminSubjectId!(e.target.value === 'all' ? null : e.target.value)}
-                className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-xl py-3 px-5 text-xs font-bold text-[var(--text-main)] appearance-none pr-12 focus:outline-none focus:border-orange-500/50 transition-all"
+                className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-xl py-3 px-5 text-xs font-bold text-[var(--text-main)] appearance-none pr-12 focus:outline-none focus:border-orange-500/50 transition-all cursor-pointer"
               >
                 <option value="all">Ver Todas as Turmas (Grid)</option>
                 {subjects.map(sub => (
@@ -127,7 +131,9 @@ export default function Insights({
                   key={sub.id}
                   variants={itemVariants}
                   onClick={() => setSelectedAdminSubjectId!(sub.id)}
-                  className="glass border border-[var(--border)] rounded-3xl p-8 hover:border-orange-500/30 transition-all cursor-pointer group flex flex-col justify-between h-56 hover:shadow-2xl hover:shadow-orange-600/5"
+                  className={`border rounded-3xl p-8 transition-all cursor-pointer group flex flex-col justify-between h-56 hover:shadow-2xl hover:shadow-orange-600/5 ${
+                    isDarkMode ? 'glass border-[var(--border)] hover:border-orange-500/30' : 'bg-white border-zinc-200 hover:border-orange-500/35 hover:shadow-zinc-200/50 shadow-sm'
+                  }`}
                 >
                   <div>
                     <div className="flex justify-between items-center mb-4">
@@ -145,7 +151,7 @@ export default function Insights({
                       Professor(a): {sub.teacherName}
                     </p>
                   </div>
-                  <div className="flex justify-between items-center pt-4 border-t border-white/5 text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-muted)] mt-4">
+                  <div className="flex justify-between items-center pt-4 border-t border-[var(--border)] text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-muted)] mt-4">
                     <span>Insights</span>
                     <span className="text-orange-500 flex items-center gap-2">
                       <span className="text-emerald-500">{completedCount} Feitas</span> • <span className="text-orange-500">{totalCount - completedCount} Pendentes</span>
@@ -191,7 +197,9 @@ export default function Insights({
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="glass border border-[var(--border)] rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-6"
+            className={`border rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-6 transition-all duration-300 ${
+              isDarkMode ? 'glass border border-[var(--border)]' : 'bg-white border-zinc-200/80 shadow-md shadow-zinc-150/30'
+            }`}
           >
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 bg-orange-500/10 text-orange-500 rounded-xl flex items-center justify-center">
@@ -206,7 +214,7 @@ export default function Insights({
               <select
                 value={selectedAdminSubjectId || 'all'}
                 onChange={(e) => setSelectedAdminSubjectId(e.target.value === 'all' ? null : e.target.value)}
-                className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-xl py-3 px-5 text-xs font-bold text-[var(--text-main)] appearance-none pr-12 focus:outline-none focus:border-orange-500/50 transition-all"
+                className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-xl py-3 px-5 text-xs font-bold text-[var(--text-main)] appearance-none pr-12 focus:outline-none focus:border-orange-500/50 transition-all cursor-pointer"
               >
                 <option value="all">Ver Todas as Turmas (Grid)</option>
                 {subjects.map(sub => (
@@ -270,7 +278,7 @@ export default function Insights({
                     <span className="text-[var(--text-main)] truncate max-w-[200px] sm:max-w-none">{barItem.name}</span>
                     <span className="text-orange-500">{barItem.pct}%</span>
                   </div>
-                  <div className="h-2 w-full bg-zinc-800 rounded-full overflow-hidden">
+                  <div className={`h-2 w-full rounded-full overflow-hidden ${isDarkMode ? 'bg-zinc-800' : 'bg-slate-100'}`}>
                     <div className="h-full sidebar-grad rounded-full" style={{ width: `${barItem.pct}%` }} />
                   </div>
                 </div>
@@ -290,7 +298,9 @@ export default function Insights({
 
             <div className="space-y-4">
               {studentsAtRisk.map((student, idx) => (
-                <div key={idx} className="p-4 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-between gap-4">
+                <div key={idx} className={`p-4 border rounded-2xl flex items-center justify-between gap-4 transition-colors duration-300 ${
+                  isDarkMode ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'
+                }`}>
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center font-bold font-display">
                       {student.avatarCode}
@@ -328,11 +338,15 @@ export default function Insights({
               Tópicos de Maior Engajamento
             </h4>
             <ul className="space-y-3">
-              <li className="flex justify-between items-center text-xs font-bold bg-white/5 p-3 rounded-xl">
+              <li className={`flex justify-between items-center text-xs font-bold p-3 rounded-xl transition-colors duration-300 ${
+                isDarkMode ? 'bg-white/5' : 'bg-slate-50'
+              }`}>
                 <span className="text-[var(--text-main)]">Introdução ao CSS Grid</span>
                 <span className="text-emerald-500">98% Concluído</span>
               </li>
-              <li className="flex justify-between items-center text-xs font-bold bg-white/5 p-3 rounded-xl">
+              <li className={`flex justify-between items-center text-xs font-bold p-3 rounded-xl transition-colors duration-300 ${
+                isDarkMode ? 'bg-white/5' : 'bg-slate-50'
+              }`}>
                 <span className="text-[var(--text-main)]">Instalação do Node.js e NPM</span>
                 <span className="text-emerald-500">94% Concluído</span>
               </li>
@@ -345,11 +359,15 @@ export default function Insights({
               Tópicos de Maior Dificuldade
             </h4>
             <ul className="space-y-3">
-              <li className="flex justify-between items-center text-xs font-bold bg-white/5 p-3 rounded-xl">
+              <li className={`flex justify-between items-center text-xs font-bold p-3 rounded-xl transition-colors duration-300 ${
+                isDarkMode ? 'bg-white/5' : 'bg-slate-50'
+              }`}>
                 <span className="text-[var(--text-main)]">Recursividade em Funções TS</span>
                 <span className="text-red-500">Média: 5.8 / 10</span>
               </li>
-              <li className="flex justify-between items-center text-xs font-bold bg-white/5 p-3 rounded-xl">
+              <li className={`flex justify-between items-center text-xs font-bold p-3 rounded-xl transition-colors duration-300 ${
+                isDarkMode ? 'bg-white/5' : 'bg-slate-50'
+              }`}>
                 <span className="text-[var(--text-main)]">Manipulação de Ponteiros</span>
                 <span className="text-red-500">Média: 6.2 / 10</span>
               </li>
@@ -372,7 +390,9 @@ export default function Insights({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 z-10 relative">
-            <div className="p-5 bg-white/5 border border-white/5 rounded-2xl space-y-3">
+            <div className={`p-5 border rounded-2xl space-y-3 transition-colors duration-300 ${
+              isDarkMode ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'
+            }`}>
               <div className="flex items-center gap-2 text-xs font-bold text-orange-500">
                 <Sparkles size={14} />
                 Reforço de Conteúdo
@@ -382,7 +402,9 @@ export default function Insights({
               </p>
             </div>
 
-            <div className="p-5 bg-white/5 border border-white/5 rounded-2xl space-y-3">
+            <div className={`p-5 border rounded-2xl space-y-3 transition-colors duration-300 ${
+              isDarkMode ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'
+            }`}>
               <div className="flex items-center gap-2 text-xs font-bold text-orange-500">
                 <Sparkles size={14} />
                 Engajamento de Leitura
