@@ -75,25 +75,45 @@ const Exams = ({
     : exams;
 
   const now = new Date();
+  const isTeacherOrAdmin = userRole === 'teacher' || userRole === 'admin';
 
-  // Prova disponível: status Disponível, prazo não passou, janela já abriu (ou sem startDate)
+  // Prova disponível/ativa: status Disponível (se aluno), prazo não expirou e início já ocorreu
   const availableExams = targetExams.filter(e => {
+    if (isTeacherOrAdmin) {
+      if (new Date(e.deadlineDate) <= now) return false;
+      if (e.startDate && new Date(e.startDate) > now) return false;
+      return true;
+    }
     if (e.status !== 'Disponível') return false;
     if (new Date(e.deadlineDate) <= now) return false;
     if (e.startDate && new Date(e.startDate) > now) return false;
     return true;
   });
 
-  // Prova encerrada: status Encerrada (prazo passou, aluno não fez)
-  const expiredExams = targetExams.filter(e => e.status === 'Encerrada');
+  // Provas agendadas (somente para professores/admins): prazo de início no futuro
+  const scheduledExams = isTeacherOrAdmin
+    ? targetExams.filter(e => e.startDate && new Date(e.startDate) > now && new Date(e.deadlineDate) > now)
+    : [];
 
-  // Prova concluída: aluno já realizou
-  const completedExams = targetExams.filter(e => e.status === 'Concluída');
+  // Prova encerrada: status Encerrada (aluno) ou prazo expirado (docente)
+  const expiredExams = targetExams.filter(e => {
+    if (isTeacherOrAdmin) {
+      return new Date(e.deadlineDate) <= now;
+    }
+    return e.status === 'Encerrada';
+  });
+
+  // Prova concluída: aluno já realizou (somente alunos)
+  const completedExams = isTeacherOrAdmin
+    ? []
+    : targetExams.filter(e => e.status === 'Concluída');
 
   // Countdown em tempo real
   useEffect(() => {
     const calcCountdowns = () => {
       const updated: Record<string, string> = {};
+      
+      // Countdown para ativas
       availableExams.forEach(exam => {
         const deadline = new Date(exam.deadlineDate);
         const diffMs = deadline.getTime() - Date.now();
@@ -113,13 +133,35 @@ const Exams = ({
           updated[exam.id] = `Encerra em ${s}s`;
         }
       });
+
+      // Countdown para agendadas
+      scheduledExams.forEach(exam => {
+        if (!exam.startDate) return;
+        const start = new Date(exam.startDate);
+        const diffMs = start.getTime() - Date.now();
+        if (diffMs <= 0) {
+          updated[exam.id] = 'Iniciando...';
+          return;
+        }
+        const totalSec = Math.floor(diffMs / 1000);
+        const h = Math.floor(totalSec / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = totalSec % 60;
+        if (h > 0) {
+          updated[exam.id] = `Começa em ${h}h ${m}min`;
+        } else if (m > 0) {
+          updated[exam.id] = `Começa em ${m}min ${s}s`;
+        } else {
+          updated[exam.id] = `Começa em ${s}s`;
+        }
+      });
+
       setCountdowns(updated);
     };
     calcCountdowns();
     const interval = setInterval(calcCountdowns, 1000);
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetExams]);
+  }, [availableExams, scheduledExams]);
 
   const container = {
     hidden: { opacity: 0 },
@@ -268,7 +310,7 @@ const Exams = ({
               <h2 className="text-2xl font-extrabold font-display flex items-center gap-4">
                 Próximas Provas
                 <span className="bg-orange-500/10 text-orange-500 text-[10px] font-extrabold px-3 py-1 rounded-full border border-orange-500/10 tracking-widest uppercase">
-                  {availableExams.length} Disponíveis
+                  {availableExams.length} {isTeacherOrAdmin ? 'Ativas' : 'Disponíveis'}
                 </span>
               </h2>
             </div>
@@ -287,8 +329,14 @@ const Exams = ({
                     <div className="w-16 h-16 bg-orange-500/10 text-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
                       <GraduationCap size={32} />
                     </div>
-                    <h3 className="text-xl font-extrabold text-[var(--text-main)] mb-2 font-display">Tudo sob controle!</h3>
-                    <p className="text-xs text-[var(--text-muted)] font-bold max-w-xs mx-auto leading-relaxed">Você não tem nenhuma prova disponível para realizar no momento. Relaxe e aproveite!</p>
+                    <h3 className="text-xl font-extrabold text-[var(--text-main)] mb-2 font-display">
+                      {isTeacherOrAdmin ? 'Nenhuma prova ativa' : 'Tudo sob controle!'}
+                    </h3>
+                    <p className="text-xs text-[var(--text-muted)] font-bold max-w-xs mx-auto leading-relaxed">
+                      {isTeacherOrAdmin 
+                        ? 'Não há nenhuma prova sendo realizada pelos alunos neste momento.' 
+                        : 'Você não tem nenhuma prova disponível para realizar no momento. Relaxe e aproveite!'}
+                    </p>
                   </motion.div>
                 ) : (
                   availableExams.map((exam) => (
@@ -313,7 +361,7 @@ const Exams = ({
                             {exam.subject}
                           </span>
                         </div>
-
+ 
                         {canCreate && (
                           <div className="absolute top-6 right-6 flex gap-2">
                             <button 
@@ -329,7 +377,7 @@ const Exams = ({
                             </button>
                           </div>
                         )}
-
+ 
                         <div className="absolute bottom-8 left-8 right-8">
                           <h3 className="text-3xl font-extrabold text-white font-display tracking-tight group-hover:text-orange-500 transition-colors">{exam.title}</h3>
                         </div>
@@ -343,7 +391,7 @@ const Exams = ({
                             <span className="text-sm font-extrabold text-orange-400">{countdowns[exam.id]}</span>
                           </div>
                         )}
-
+ 
                         <div className="grid grid-cols-2 gap-8 mb-10">
                           {/* Janela de Acesso */}
                           <div className="space-y-1 col-span-2">
@@ -364,21 +412,34 @@ const Exams = ({
                           </div>
                           <div className="space-y-1">
                             <p className="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-[0.15em] flex items-center gap-2">
-                              <Trophy size={14} className="text-orange-500" /> Nota
+                              <Trophy size={14} className="text-orange-500" /> Nota / Peso
                             </p>
-                            <p className="text-lg font-bold">{exam.grade ? `${exam.grade} / 10` : 'Pendente'}</p>
+                            <p className="text-lg font-bold">
+                              {isTeacherOrAdmin 
+                                ? `Peso ${exam.weight || '1.0'}` 
+                                : (exam.grade ? `${exam.grade} / 10` : 'Pendente')}
+                            </p>
                           </div>
                         </div>
-
+ 
                         <div className="flex gap-4">
                           <motion.button 
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => onStartExam(exam.id)}
-                            className="sidebar-grad text-white px-10 py-4 rounded-2xl font-extrabold flex items-center gap-3 shadow-xl shadow-orange-600/20 transition-all justify-center group/btn"
+                            className="sidebar-grad text-white px-10 py-4 rounded-2xl font-extrabold flex items-center gap-3 shadow-xl shadow-orange-600/20 transition-all justify-center group/btn cursor-pointer w-full sm:w-auto"
                           >
-                            <Play size={20} fill="currentColor" />
-                            Iniciar Prova
+                            {isTeacherOrAdmin ? (
+                              <>
+                                <FileText size={20} />
+                                Ver Submissões
+                              </>
+                            ) : (
+                              <>
+                                <Play size={20} fill="currentColor" />
+                                Iniciar Prova
+                              </>
+                            )}
                             <ArrowUpRight size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                           </motion.button>
                         </div>
@@ -389,6 +450,114 @@ const Exams = ({
               </AnimatePresence>
             </div>
           </section>
+
+          {/* Seção de Provas Agendadas (Somente Professores/Admins) */}
+          {isTeacherOrAdmin && scheduledExams.length > 0 && (
+            <section>
+              <div className="flex items-center justify-between mb-10 px-2">
+                <h2 className="text-2xl font-extrabold font-display flex items-center gap-4">
+                  Provas Agendadas
+                  <span className="bg-blue-500/10 text-blue-405 text-[10px] font-extrabold px-3 py-1 rounded-full border border-blue-500/20 tracking-widest uppercase">
+                    {scheduledExams.length} Agendada{scheduledExams.length > 1 ? 's' : ''}
+                  </span>
+                </h2>
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {scheduledExams.map((exam) => (
+                  <motion.div 
+                    key={exam.id} 
+                    variants={item}
+                    className={`border rounded-2xl overflow-hidden group transition-all shadow-lg hover:shadow-blue-600/5 ${
+                      isDarkMode ? 'glass border-[var(--border)] hover:border-blue-500/30' : 'bg-white border-zinc-200 hover:border-blue-500/35 hover:shadow-zinc-200/50'
+                    }`}
+                  >
+                    <div className="h-64 overflow-hidden relative bg-zinc-900 flex items-center justify-center">
+                      {exam.image ? (
+                        <img src={exam.image} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" referrerPolicy="no-referrer" />
+                      ) : (
+                        <div className="absolute inset-0 mesh-gradient opacity-20 group-hover:opacity-40 transition-opacity" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                      
+                      <div className="absolute top-6 left-6">
+                        <span className="text-[10px] font-extrabold bg-blue-600 text-white px-4 py-1.5 rounded-full tracking-[0.2em] uppercase shadow-lg shadow-blue-600/30">
+                          {exam.subject}
+                        </span>
+                      </div>
+
+                      {canCreate && (
+                        <div className="absolute top-6 right-6 flex gap-2">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExamToDelete(exam.id);
+                            }}
+                            className={`p-3 border rounded-2xl text-white hover:bg-red-500 transition-all cursor-pointer ${
+                              isDarkMode ? 'glass border-white/10' : 'bg-black/40 border-black/10 hover:border-red-500'
+                            }`}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="absolute bottom-8 left-8 right-8">
+                        <h3 className="text-3xl font-extrabold text-white font-display tracking-tight group-hover:text-blue-500 transition-colors">{exam.title}</h3>
+                      </div>
+                    </div>
+                    
+                    <div className="p-10">
+                      {/* Countdown para o início da prova */}
+                      {countdowns[exam.id] && (
+                        <div className="flex items-center gap-2 mb-6 bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-2.5">
+                          <Timer size={14} className="text-blue-450 dark:text-blue-405 animate-pulse shrink-0" />
+                          <span className="text-sm font-extrabold text-blue-450 dark:text-blue-405">{countdowns[exam.id]}</span>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-8 mb-10">
+                        <div className="space-y-1 col-span-2">
+                          <p className="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-[0.15em] flex items-center gap-2">
+                            <Calendar size={14} className="text-blue-500" /> Janela de Acesso
+                          </p>
+                          <p className="text-sm font-bold">
+                            {exam.startDate ? formatDate(exam.startDate) : '—'}
+                            <span className="text-blue-500 mx-2">→</span>
+                            {formatDate(exam.deadlineDate)}
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-[0.15em] flex items-center gap-2">
+                            <CheckCircle2 size={14} className="text-blue-500" /> Questões
+                          </p>
+                          <p className="text-lg font-bold">{exam.questionsCount} itens</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-[0.15em] flex items-center gap-2">
+                            <Trophy size={14} className="text-blue-500" /> Peso
+                          </p>
+                          <p className="text-lg font-bold">{exam.weight || '1.0'}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-4">
+                        <motion.button 
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => onStartExam(exam.id)}
+                          className="w-full py-4 bg-zinc-800 border border-zinc-700/50 text-zinc-300 dark:border-zinc-700 dark:bg-zinc-850 hover:bg-zinc-750 dark:hover:bg-zinc-800 rounded-2xl font-extrabold flex items-center gap-2 transition-all justify-center cursor-pointer"
+                        >
+                          <Clock size={18} />
+                          Aguardando Início
+                        </motion.button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Seção de Provas Encerradas */}
           {expiredExams.length > 0 && (
@@ -443,16 +612,30 @@ const Exams = ({
                         <div className="w-9 h-9 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0 mt-0.5">
                           <AlertTriangle size={16} className="text-red-400" />
                         </div>
-                        <div>
+                        <div className="flex-1">
                           <p className="text-xs font-extrabold text-red-400 uppercase tracking-widest mb-1">
                             Encerrada em {exam.deadlineDate ? new Date(exam.deadlineDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
                           </p>
                           <p className="text-sm text-[var(--text-muted)] font-medium leading-relaxed">
-                            Você não realizou esta prova no período disponível.
+                            {isTeacherOrAdmin
+                              ? 'Período de realização pelos alunos finalizado.'
+                              : 'Você não realizou esta prova no período disponível.'}
                           </p>
-                          <div className="mt-3 text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest flex items-center gap-1">
-                            <Lock size={10} /> Acesso bloqueado
-                          </div>
+                          
+                          {isTeacherOrAdmin ? (
+                            <button
+                              onClick={() => onStartExam(exam.id)}
+                              className="mt-4 px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <FileText size={14} />
+                              Ver Submissões e Notas
+                              <ArrowUpRight size={14} />
+                            </button>
+                          ) : (
+                            <div className="mt-3 text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest flex items-center gap-1">
+                              <Lock size={10} /> Acesso bloqueado
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

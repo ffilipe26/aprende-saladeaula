@@ -128,14 +128,18 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
   const filteredRows = allRows.filter((row) => {
     if (filterStatus === 'all') return true;
     if (filterStatus === 'absent') return row.status === 'absent';
+    if (filterStatus === 'graded') return row.status === 'graded' || row.final_score !== null;
+    if (filterStatus === 'submitted') return row.status === 'submitted' && row.final_score === null;
+    if (filterStatus === 'late') return row.status === 'late' && row.final_score === null;
     return row.status === filterStatus;
   });
 
   // Estatísticas de resumo
   const totalStudents = allStudents.length || submissions.length;
   const submittedCount = submissions.length;
-  const gradedCount = submissions.filter((s) => s.status === 'graded').length;
-  const pendingCount = submissions.filter((s) => s.status !== 'graded').length;
+  const gradedCount = submissions.filter((s) => s.status === 'graded' || s.final_score !== null).length;
+  const pendingCount = submissions.filter((s) => s.status !== 'graded' && s.final_score === null).length;
+  const publishableCount = submissions.filter((s) => s.final_score !== null && s.status !== 'graded').length;
   const scoredSubmissions = submissions.filter((s) => s.final_score != null || s.auto_score != null);
   const avgScore =
     scoredSubmissions.length > 0
@@ -145,9 +149,9 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
 
   const filters: { label: string; value: FilterStatus; count: number }[] = [
     { label: 'Todos', value: 'all', count: allRows.length },
-    { label: 'Entregues', value: 'submitted', count: allRows.filter((r) => r.status === 'submitted').length },
-    { label: 'Atrasados', value: 'late', count: allRows.filter((r) => r.status === 'late').length },
-    { label: 'Corrigidos', value: 'graded', count: allRows.filter((r) => r.status === 'graded').length },
+    { label: 'Entregues', value: 'submitted', count: allRows.filter((r) => r.status === 'submitted' && r.final_score === null).length },
+    { label: 'Atrasados', value: 'late', count: allRows.filter((r) => r.status === 'late' && r.final_score === null).length },
+    { label: 'Corrigidos', value: 'graded', count: allRows.filter((r) => r.status === 'graded' || r.final_score !== null).length },
     { label: 'Ausentes', value: 'absent', count: allRows.filter((r) => r.status === 'absent').length },
   ];
 
@@ -201,10 +205,10 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={handlePublishAll}
-          disabled={publishing || submissions.length === 0}
+          disabled={publishing || publishableCount === 0}
           className="sidebar-grad text-white px-8 py-4 rounded-2xl font-extrabold shadow-xl shadow-orange-600/20 transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
         >
-          {publishing ? 'Publicando...' : 'Publicar Notas (Lote)'}
+          {publishing ? 'Publicando...' : `Publicar ${publishableCount} Nota${publishableCount !== 1 ? 's' : ''} (Lote)`}
           <Check size={18} />
         </motion.button>
       </motion.div>
@@ -343,7 +347,11 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
                     <td className="px-8 py-6 text-center">
                       {row.status === 'graded' ? (
                         <span className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest border border-emerald-500/20">
-                          <CheckCircle2 size={12} /> Corrigido
+                          <CheckCircle2 size={12} /> Corrigido & Publicado
+                        </span>
+                      ) : row.final_score !== null ? (
+                        <span className="inline-flex items-center gap-1.5 bg-blue-500/10 text-blue-500 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest border border-blue-500/20">
+                          <CheckCircle2 size={12} /> Corrigido (Rascunho)
                         </span>
                       ) : row.status === 'late' ? (
                         <span className="inline-flex items-center gap-1.5 bg-red-500/10 text-red-500 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest border border-red-500/20">

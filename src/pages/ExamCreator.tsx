@@ -14,7 +14,7 @@ interface ExamCreatorProps {
   subjects: Subject[];
   onBack: () => void;
   onNavigate: (section: string) => void;
-  onReload?: () => void;
+  onReload?: (subjectId?: string) => void;
   isDarkMode: boolean;
 }
 
@@ -193,7 +193,7 @@ export default function ExamCreator({ currentUser, subjects, onBack, onNavigate,
       setFeedback({ type: 'error', msg: result.error });
     } else {
       setFeedback({ type: 'success', msg: 'Prova criada com sucesso!' });
-      if (onReload) onReload();
+      if (onReload) onReload(subjectId);
       setTimeout(() => {
         onNavigate('exams');
       }, 1500);

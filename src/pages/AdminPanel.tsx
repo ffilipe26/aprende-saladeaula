@@ -58,6 +58,10 @@ export default function AdminPanel({
   const [activeTab, setActiveTab] = useState<TabType>(isTeacher ? 'students' : 'teachers');
   const [searchQuery, setSearchQuery] = useState('');
   
+  // Filtros Avançados
+  const [filterClassId, setFilterClassId] = useState<string>('all');
+  const [filterSubjectId, setFilterSubjectId] = useState<string>('all');
+
   // Modais de Criação
   const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
@@ -81,6 +85,7 @@ export default function AdminPanel({
   const [subjectName, setSubjectName] = useState('');
   const [subjectCode, setSubjectCode] = useState('');
   const [subjectTeacherId, setSubjectTeacherId] = useState('');
+  const [subjectClassId, setSubjectClassId] = useState('');
 
   const myStudentIds = isTeacher ? subjects.filter(s => s.teacherId === currentUser?.id).flatMap(s => s.studentIds) : [];
 
@@ -90,20 +95,26 @@ export default function AdminPanel({
     ? schoolMembers.filter(m => m.role === 'student' && myStudentIds.includes(m.id))
     : schoolMembers.filter(m => m.role === 'student');
 
-  const filteredTeachers = teachers.filter(t => 
-    t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    t.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const availableSubjects = isTeacher ? subjects.filter(s => s.teacherId === currentUser?.id) : subjects;
 
-  const filteredStudents = students.filter(s => 
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    s.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredTeachers = teachers.filter(t => {
+    const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSubject = filterSubjectId === 'all' || subjects.some(s => s.id === filterSubjectId && s.teacherId === t.id);
+    return matchesSearch && matchesSubject;
+  });
 
-  const filteredSubjects = subjects.filter(s => 
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    s.code.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredStudents = students.filter(s => {
+    const matchesSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesClass = filterClassId === 'all' || s.classId === filterClassId;
+    const matchesSubject = filterSubjectId === 'all' || subjects.find(sub => sub.id === filterSubjectId)?.studentIds.includes(s.id);
+    return matchesSearch && matchesClass && matchesSubject;
+  });
+
+  const filteredSubjects = subjects.filter(s => {
+    const matchesSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.code.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesClass = filterClassId === 'all' || s.classId === filterClassId;
+    return matchesSearch && matchesClass;
+  });
 
   // ==========================================
   // FUNÇÕES DE CRUD
@@ -180,19 +191,61 @@ export default function AdminPanel({
     setMemberPassword('Mudar@1234');
   };
 
-  const handleAddSubject = (e: React.FormEvent) => {
+  const handleAddSubject = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!subjectName || !subjectCode) return;
+    if (!subjectName || !subjectCode || !subjectClassId || !currentUser) return;
+    setIsLoading(true);
+    setModalFeedback(null);
 
     const assignedTeacher = teachers.find(t => t.id === subjectTeacherId);
 
+    const { data, error } = await supabase
+      .from('subjects')
+      .insert([{
+        institution_id: currentUser.institutionId,
+        class_id: subjectClassId,
+        teacher_id: subjectTeacherId || null,
+        name: subjectName,
+        code: subjectCode.toUpperCase()
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[AddSubject] Erro no Supabase:', error);
+      alert('Erro ao salvar disciplina: ' + error.message);
+      setIsLoading(false);
+      return;
+    }
+
+    const newId = data ? data.id : `s-${Date.now()}`;
+
+    // Auto-matricula todos os alunos desta turma na nova matéria
+    const classStudents = schoolMembers.filter(m => m.classId === subjectClassId && m.role === 'student');
+    const studentIds = classStudents.map(s => s.id);
+    
+    if (studentIds.length > 0 && data) {
+      const enrollmentsToInsert = studentIds.map(sId => ({
+        student_id: sId,
+        subject_id: newId,
+        class_id: subjectClassId
+      }));
+      const { error: enrollError } = await supabase
+        .from('subject_enrollments')
+        .insert(enrollmentsToInsert);
+      if (enrollError) {
+        console.error('[AddSubject] Erro ao matricular alunos:', enrollError);
+      }
+    }
+
     const newSubject: Subject = {
-      id: `s-${Date.now()}`,
+      id: newId,
       name: subjectName,
       code: subjectCode.toUpperCase(),
+      classId: subjectClassId,
       teacherId: subjectTeacherId || 'unassigned',
       teacherName: assignedTeacher ? assignedTeacher.name : 'Sem Professor',
-      studentIds: []
+      studentIds: studentIds
     };
 
     setSubjects(prev => [...prev, newSubject]);
@@ -201,7 +254,9 @@ export default function AdminPanel({
     setSubjectName('');
     setSubjectCode('');
     setSubjectTeacherId('');
+    setSubjectClassId('');
     setIsSubjectModalOpen(false);
+    setIsLoading(false);
   };
 
   const executeDeleteMember = async () => {
@@ -228,7 +283,18 @@ export default function AdminPanel({
     setMemberToDelete(null);
   };
 
-  const handleDeleteSubject = (id: string) => {
+  const handleDeleteSubject = async (id: string) => {
+    const { error } = await supabase
+      .from('subjects')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Erro ao deletar disciplina:', error);
+      alert('Erro ao excluir disciplina no Supabase: ' + error.message);
+      return;
+    }
+
     setSubjects(prev => prev.filter(s => s.id !== id));
   };
 
@@ -324,6 +390,8 @@ export default function AdminPanel({
               onClick={() => {
                 setActiveTab(tab.id as TabType);
                 setSearchQuery('');
+                setFilterClassId('all');
+                setFilterSubjectId('all');
               }}
               className={`px-5 py-2.5 rounded-[14px] font-bold text-sm transition-all relative shrink-0 cursor-pointer ${
                 activeTab === tab.id 
@@ -352,18 +420,56 @@ export default function AdminPanel({
           ))}
         </div>
 
-        {/* Barra de Pesquisa */}
-        <div className="relative flex-1 md:flex-none">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
-          <input 
-            type="text" 
-            placeholder="Pesquisar..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={`border rounded-2xl py-3.5 pl-12 pr-6 w-full md:w-80 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 transition-all text-sm font-medium ${
-              isDarkMode ? 'glass border-[var(--border)] text-white' : 'bg-white border-zinc-200 text-zinc-900 shadow-sm'
-            }`}
-          />
+        {/* Barra de Pesquisa e Filtros */}
+        <div className="flex flex-col md:flex-row gap-3 flex-1 md:flex-none items-stretch md:items-center">
+          {/* Filtro de Turma (Visível em Alunos e Disciplinas) */}
+          {(activeTab === 'students' || activeTab === 'subjects') && (
+            <div className="relative">
+              <Layers className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" size={16} />
+              <select 
+                value={filterClassId} 
+                onChange={(e) => setFilterClassId(e.target.value)}
+                className={`border rounded-2xl py-3 pl-11 pr-10 appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 transition-all text-sm font-medium w-full min-w-[200px] h-12 cursor-pointer ${
+                  isDarkMode ? 'glass border-[var(--border)] text-white' : 'bg-white border-zinc-200 text-zinc-900 shadow-sm'
+                }`}
+              >
+                <option value="all">Todas as Turmas</option>
+                {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" size={16} />
+            </div>
+          )}
+
+          {/* Filtro de Disciplina (Visível em Alunos e Professores) */}
+          {(activeTab === 'students' || activeTab === 'teachers') && (
+            <div className="relative">
+              <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" size={16} />
+              <select 
+                value={filterSubjectId} 
+                onChange={(e) => setFilterSubjectId(e.target.value)}
+                className={`border rounded-2xl py-3 pl-11 pr-10 appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 transition-all text-sm font-medium w-full min-w-[200px] h-12 cursor-pointer ${
+                  isDarkMode ? 'glass border-[var(--border)] text-white' : 'bg-white border-zinc-200 text-zinc-900 shadow-sm'
+                }`}
+              >
+                <option value="all">Todas as Disciplinas</option>
+                {availableSubjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" size={16} />
+            </div>
+          )}
+
+          <div className="relative flex-1 md:w-64">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" size={18} />
+            <input 
+              type="text" 
+              placeholder="Pesquisar..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={`border rounded-2xl py-3 pl-12 pr-6 w-full focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 transition-all text-sm font-medium h-12 ${
+                isDarkMode ? 'glass border-[var(--border)] text-white' : 'bg-white border-zinc-200 text-zinc-900 shadow-sm'
+              }`}
+            />
+          </div>
         </div>
       </div>
 
@@ -727,6 +833,26 @@ export default function AdminPanel({
                       isDarkMode ? 'bg-zinc-900 border-[var(--border)] text-white placeholder:text-zinc-600' : 'bg-slate-50 border-zinc-200 text-zinc-900 placeholder:text-zinc-400'
                     }`}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-extrabold uppercase text-[var(--text-muted)] tracking-wider">Atribuir a uma Turma</label>
+                  <div className="relative">
+                    <select 
+                      required
+                      value={subjectClassId}
+                      onChange={(e) => setSubjectClassId(e.target.value)}
+                      className={`w-full border rounded-xl py-3 px-4 text-sm font-medium focus:outline-none focus:border-orange-500/50 transition-all appearance-none pr-10 ${
+                        isDarkMode ? 'bg-zinc-900 border-[var(--border)] text-white' : 'bg-slate-50 border-zinc-200 text-zinc-900'
+                      }`}
+                    >
+                      <option value="">Selecione uma turma...</option>
+                      {classes.map(c => (
+                        <option key={c.id} value={c.id}>{c.name} ({c.shift})</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+                  </div>
                 </div>
 
                 <div className="space-y-2">

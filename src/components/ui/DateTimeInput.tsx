@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Calendar } from 'lucide-react';
 
 interface DateTimeInputProps {
@@ -9,8 +9,11 @@ interface DateTimeInputProps {
 
 export default function DateTimeInput({ value, onChange, label }: DateTimeInputProps) {
   const [text, setText] = useState('');
+  const lastSentValue = useRef('');
 
   useEffect(() => {
+    if (value === lastSentValue.current) return;
+
     if (value && value.includes('T')) {
       const d = new Date(value);
       if (!isNaN(d.getTime())) {
@@ -39,13 +42,20 @@ export default function DateTimeInput({ value, onChange, label }: DateTimeInputP
     setText(formatted);
 
     if (val.length === 12) {
-      const DD = val.substring(0,2);
-      const MM = val.substring(2,4);
-      const YYYY = val.substring(4,8);
-      const HH = val.substring(8,10);
-      const MIN = val.substring(10,12);
-      onChange(`${YYYY}-${MM}-${DD}T${HH}:${MIN}:00`);
+      const DD = Number(val.substring(0,2));
+      const MM = Number(val.substring(2,4)) - 1; // Month is 0-indexed in JS Date
+      const YYYY = Number(val.substring(4,8));
+      const HH = Number(val.substring(8,10));
+      const MIN = Number(val.substring(10,12));
+      
+      const localDate = new Date(YYYY, MM, DD, HH, MIN, 0);
+      if (!isNaN(localDate.getTime())) {
+        const isoStr = localDate.toISOString();
+        lastSentValue.current = isoStr;
+        onChange(isoStr);
+      }
     } else {
+      lastSentValue.current = '';
       onChange(''); 
     }
   };

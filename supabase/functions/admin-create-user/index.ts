@@ -21,7 +21,7 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    const { name, email, password, role, institutionId, registrationNumber } = await req.json()
+    const { name, email, password, role, institutionId, registrationNumber, classId } = await req.json()
 
     // 1. Criar Auth User
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -57,6 +57,7 @@ serve(async (req) => {
           name,
           role,
           institution_id: institutionId,
+          class_id: classId || null,
           must_change_password: true // Always true for created users by admin
         })
         .eq('id', userId)
@@ -80,6 +81,7 @@ serve(async (req) => {
           name,
           role,
           institution_id: institutionId,
+          class_id: classId || null,
           must_change_password: true
         })
         .select()

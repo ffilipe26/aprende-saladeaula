@@ -63,8 +63,47 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
   const [submissionStatus, setSubmissionStatus] = useState<'submitted' | 'late' | 'graded' | null>(null);
   const [teacherFeedback, setTeacherFeedback] = useState<string | null>(null);
   const [showReview, setShowReview] = useState(false);
+  const [reviewQuestions, setReviewQuestions] = useState<any[]>([]);
+  const [questionFeedback, setQuestionFeedback] = useState<Record<string, string>>({});
+  const [questionScores, setQuestionScores] = useState<Record<string, number>>({});
   const [isLoadingReview, setIsLoadingReview] = useState(isAlreadyConcluida);
   const isDeadlinePassed = activity.deadlineDate ? new Date() > new Date(activity.deadlineDate) : false;
+
+  const getQuestionScore = (q: any): number => {
+    if (questionScores[q.id] !== undefined) {
+      return questionScores[q.id];
+    }
+    if (q.type === 'multiple_choice') {
+      const correctAnswers = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer];
+      const userAnswer = answers[q.id];
+      const userAnswers = Array.isArray(userAnswer) ? userAnswer : [userAnswer].filter(Boolean);
+      if (correctAnswers.length > 0) {
+        const pointsPerCorrect = q.points / correctAnswers.length;
+        let qScore = 0;
+        let hasWrongAnswer = false;
+        userAnswers.forEach((ua: string) => {
+          if (correctAnswers.includes(ua)) {
+            qScore += pointsPerCorrect;
+          } else {
+            hasWrongAnswer = true;
+          }
+        });
+        if (userAnswers.length > correctAnswers.length || hasWrongAnswer) {
+          qScore = 0;
+        }
+        return Math.min(qScore, q.points);
+      }
+    } else if (q.type === 'true_false') {
+      const correct =
+        q.correctAnswer === true || q.correctAnswer === 'true'
+          ? true
+          : q.correctAnswer === false || q.correctAnswer === 'false'
+          ? false
+          : q.correctAnswer;
+      if (answers[q.id] === correct) return q.points;
+    }
+    return 0;
+  };
 
   useEffect(() => {
     if (isAlreadyConcluida) {
@@ -82,12 +121,45 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
           setFinalScore(data.final_score != null ? data.final_score : (data.auto_score || 0));
           setSubmissionStatus(data.status);
           setTeacherFeedback(data.teacher_feedback || null);
+          
+          const feedbackMap: Record<string, string> = {};
+          const scoreMap: Record<string, number> = {};
+          if (data.question_feedback) {
+            Object.entries(data.question_feedback).forEach(([qId, val]: [string, any]) => {
+              if (val && typeof val === 'object' && !Array.isArray(val)) {
+                feedbackMap[qId] = val.feedback || '';
+                if (val.score !== undefined) {
+                  scoreMap[qId] = Number(val.score);
+                }
+              } else {
+                feedbackMap[qId] = String(val || '');
+              }
+            });
+            setQuestionFeedback(feedbackMap);
+            setQuestionScores(scoreMap);
+          }
         }
+
+        // Busca as questões oficiais com correctAnswer para a revisão
+        try {
+          const qTable = isExam ? 'exams' : 'activities';
+          const { data: qData } = await supabase
+            .from(qTable)
+            .select('questions')
+            .eq('id', activity.id)
+            .single();
+          if (qData && qData.questions) {
+            setReviewQuestions(qData.questions);
+          }
+        } catch (e) {
+          console.error("Erro ao carregar gabarito para revisão:", e);
+        }
+
         setIsLoadingReview(false);
       };
       fetchSubmission();
     }
-  }, [activity.id, isAlreadyConcluida, currentUser.id]);
+  }, [activity.id, isAlreadyConcluida, currentUser.id, isExam]);
 
   // ==========================================
   // EFEITOS COLATERAIS (TIMER DO QUIZ E AUTOSAVE)
@@ -159,8 +231,12 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
   };
 
   const calculateScore = () => {
+    return calculateScoreWithQuestions(activity.questions);
+  };
+
+  const calculateScoreWithQuestions = (questions: any[]) => {
     let score = 0;
-    activity.questions.forEach(q => {
+    questions.forEach(q => {
       const userAnswer = answers[q.id];
       if (q.type === 'multiple_choice') {
         const correctAnswers = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer];
@@ -169,11 +245,17 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
         if (correctAnswers.length > 0) {
           const pointsPerCorrect = q.points / correctAnswers.length;
           let questionScore = 0;
+          let hasWrongAnswer = false;
           userAnswers.forEach((ua: string) => {
             if (correctAnswers.includes(ua)) {
               questionScore += pointsPerCorrect;
+            } else {
+              hasWrongAnswer = true;
             }
           });
+          if (userAnswers.length > correctAnswers.length || hasWrongAnswer) {
+            questionScore = 0;
+          }
           score += Math.min(questionScore, q.points);
         }
       } else if (q.type === 'true_false') {
@@ -190,7 +272,24 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
   const handleFinish = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
-    const score = calculateScore();
+
+    // Busca as respostas corretas dinamicamente do Supabase para cálculo seguro
+    let officialQuestions = activity.questions;
+    try {
+      const qTable = isExam ? 'exams' : 'activities';
+      const { data: qData } = await supabase
+        .from(qTable)
+        .select('questions')
+        .eq('id', activity.id)
+        .single();
+      if (qData && qData.questions) {
+        officialQuestions = qData.questions;
+      }
+    } catch (e) {
+      console.error("Erro ao carregar gabarito para cálculo de nota:", e);
+    }
+
+    const score = calculateScoreWithQuestions(officialQuestions);
     setFinalScore(score);
     
     // Verifica se está com atraso
@@ -236,12 +335,31 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
     setIsSubmitting(false);
   };
 
+  const handleOpenReview = async () => {
+    setIsLoadingReview(true);
+    try {
+      const qTable = isExam ? 'exams' : 'activities';
+      const { data: qData } = await supabase
+        .from(qTable)
+        .select('questions')
+        .eq('id', activity.id)
+        .single();
+      if (qData && qData.questions) {
+        setReviewQuestions(qData.questions);
+      }
+    } catch (e) {
+      console.error("Erro ao carregar gabarito para revisão:", e);
+    }
+    setIsLoadingReview(false);
+    setShowReview(true);
+  };
+
   const progress = Math.round((Object.keys(answers).length / activity.questions.length) * 100) || 0;
 
   // ==========================================
   // RENDERIZAÇÃO CONDICIONAL: PROVA ENCERRADA
   // ==========================================
-  if (isExam && isDeadlinePassed && !isAlreadyConcluida) {
+  if (isExam && isDeadlinePassed && !isAlreadyConcluida && !isFinished) {
     const formattedDeadline = activity.deadlineDate
       ? new Date(activity.deadlineDate).toLocaleString('pt-BR', {
           day: '2-digit', month: 'long', year: 'numeric',
@@ -472,24 +590,35 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
             </div>
             
             {/* Cartões de estatísticas de aproveitamento */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className={`rounded-2xl p-6 border transition-colors duration-300 ${
+            {submissionStatus === 'graded' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className={`rounded-2xl p-6 border transition-colors duration-300 ${
+                  isDarkMode ? 'glass bg-white/5 border-white/5' : 'bg-slate-50 border-zinc-200 shadow-sm'
+                }`}>
+                  <p className="text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider mb-1">Sua Pontuação</p>
+                  <p className="text-3xl font-extrabold text-orange-500 font-display">
+                    {finalScore} <span className="text-lg text-[var(--text-muted)] font-medium">/ {activity.totalPoints}</span>
+                  </p>
+                </div>
+                <div className={`rounded-2xl p-6 border transition-colors duration-300 ${
+                  isDarkMode ? 'glass bg-white/5 border-white/5' : 'bg-slate-50 border-zinc-200 shadow-sm'
+                }`}>
+                  <p className="text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider mb-1">Aproveitamento</p>
+                  <p className="text-3xl font-extrabold text-emerald-500 font-display">
+                    {Math.round((finalScore / activity.totalPoints) * 100)}%
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className={`rounded-2xl p-6 border text-center transition-colors duration-300 ${
                 isDarkMode ? 'glass bg-white/5 border-white/5' : 'bg-slate-50 border-zinc-200 shadow-sm'
               }`}>
-                <p className="text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider mb-1">Sua Pontuação</p>
-                <p className="text-3xl font-extrabold text-orange-500 font-display">
-                  {finalScore} <span className="text-lg text-[var(--text-muted)] font-medium">/ {activity.totalPoints}</span>
+                <p className="text-xs font-bold text-orange-500 uppercase tracking-wider mb-1">Aguardando Publicação de Notas</p>
+                <p className="text-xs text-[var(--text-muted)] font-medium">
+                  Suas respostas foram registradas com sucesso. A nota e a revisão detalhada estarão disponíveis assim que o professor publicar as correções da turma.
                 </p>
               </div>
-              <div className={`rounded-2xl p-6 border transition-colors duration-300 ${
-                isDarkMode ? 'glass bg-white/5 border-white/5' : 'bg-slate-50 border-zinc-200 shadow-sm'
-              }`}>
-                <p className="text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider mb-1">Aproveitamento</p>
-                <p className="text-3xl font-extrabold text-emerald-500 font-display">
-                  {Math.round((finalScore / activity.totalPoints) * 100)}%
-                </p>
-              </div>
-            </div>
+            )}
 
             {/* Ações de finalização da atividade */}
             <div className="flex flex-col sm:flex-row gap-4 pt-2">
@@ -509,15 +638,17 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
                 <ChevronLeft size={18} />
                 Voltar para {isExam ? 'Provas' : 'Atividades'}
               </motion.button>
-              <motion.button 
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowReview(true)}
-                className="flex-1 sidebar-grad text-white py-3 rounded-xl font-extrabold shadow-lg shadow-orange-600/20 transition-all flex items-center justify-center gap-2 text-sm cursor-pointer"
-              >
-                Ver Revisão da {isExam ? 'Prova' : 'Atividade'}
-                <ArrowRight size={18} />
-              </motion.button>
+              {submissionStatus === 'graded' && (
+                <motion.button 
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleOpenReview}
+                  className="flex-1 sidebar-grad text-white py-3 rounded-xl font-extrabold shadow-lg shadow-orange-600/20 transition-all flex items-center justify-center gap-2 text-sm cursor-pointer"
+                >
+                  Ver Revisão da {isExam ? 'Prova' : 'Atividade'}
+                  <ArrowRight size={18} />
+                </motion.button>
+              )}
             </div>
           </div>
         </motion.div>
@@ -526,6 +657,7 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
   }
 
   const showCorrectAnswers = showReview;
+  const activeQuestions = showReview && reviewQuestions.length > 0 ? reviewQuestions : activity.questions;
 
   if (isLoadingReview) {
     return <div className="text-center py-20 font-bold text-zinc-500">Carregando revisão...</div>;
@@ -724,7 +856,7 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
       {/* LISTA DE QUESTÕES (DESIGN COMPACTADO)      */}
       {/* ========================================== */}
       <div className="space-y-6">
-        {activity.questions.map((q, idx) => (
+        {activeQuestions.map((q, idx) => (
           <motion.div 
             key={q.id} 
             initial={{ opacity: 0, y: 15 }}
@@ -741,11 +873,23 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
               <span className="text-[8px] font-extrabold bg-orange-500/10 text-orange-500 px-3 py-1 rounded-lg tracking-wider uppercase border border-orange-500/10">
                 QUESTÃO {idx + 1}
               </span>
-              <span className={`text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider px-3 py-1 rounded-lg border transition-colors duration-300 ${
-                isDarkMode ? 'bg-white/5 border-white/5' : 'bg-slate-55 border-zinc-250'
-              }`}>
-                {q.points.toFixed(1)} Pontos
-              </span>
+              {showReview ? (
+                <span className={`text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-lg border transition-all duration-300 ${
+                  getQuestionScore(q) === q.points
+                    ? (isDarkMode ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-700')
+                    : getQuestionScore(q) > 0
+                    ? (isDarkMode ? 'bg-orange-500/10 border-orange-500/20 text-orange-400' : 'bg-orange-50 border-orange-200 text-orange-700')
+                    : (isDarkMode ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-red-50 border-red-200 text-red-700')
+                }`}>
+                  Nota: {getQuestionScore(q).toFixed(1)} / {q.points.toFixed(1)} pts
+                </span>
+              ) : (
+                <span className={`text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider px-3 py-1 rounded-lg border transition-colors duration-300 ${
+                  isDarkMode ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-zinc-200'
+                }`}>
+                  {q.points.toFixed(1)} Pontos
+                </span>
+              )}
             </div>
             
             {/* Texto principal do enunciado */}
@@ -862,6 +1006,20 @@ export default function ActivityDetail({ activity, currentUser, isExam = false, 
                         : 'bg-white text-zinc-800 border-zinc-200 focus:ring-1 focus:ring-orange-500/30 focus:border-orange-500/40')
                 }`}
               />
+            )}
+
+            {/* Feedback por questão (visível apenas na revisão se houver) */}
+            {showReview && questionFeedback[q.id] && (
+              <div className={`border rounded-2xl p-4 mt-3 transition-all duration-300 ${
+                isDarkMode ? 'bg-orange-500/5 border-orange-500/10' : 'bg-orange-50/50 border-orange-200'
+              }`}>
+                <p className="text-[9px] font-extrabold text-orange-500 uppercase tracking-widest mb-1.5">
+                  Feedback do Professor:
+                </p>
+                <p className={`text-xs font-semibold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                  {questionFeedback[q.id]}
+                </p>
+              </div>
             )}
           </motion.div>
         ))}

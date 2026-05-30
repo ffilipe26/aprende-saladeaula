@@ -287,7 +287,14 @@ export const adminService = {
     }
   },
 
-    async gradeSubmission(submissionId: string, type: 'activity' | 'exam', newScore: number, status: 'graded', feedback?: string) {
+  async gradeSubmission(
+    submissionId: string, 
+    type: 'activity' | 'exam', 
+    newScore: number, 
+    status: string, 
+    feedback?: string, 
+    questionFeedback?: Record<string, string>
+  ) {
     try {
       const table = type === 'activity' ? 'activity_submissions' : 'exam_submissions';
       const updateData: any = {
@@ -295,8 +302,11 @@ export const adminService = {
         final_score: newScore,
         status: status
       };
-      if (feedback && type === 'exam') {
+      if (feedback) {
         updateData.teacher_feedback = feedback;
+      }
+      if (questionFeedback) {
+        updateData.question_feedback = questionFeedback;
       }
       const { data, error } = await supabase
         .from(table)
@@ -320,7 +330,7 @@ export const adminService = {
         .from(table)
         .update({ status: 'graded' })
         .eq(idField, activityId)
-        .eq('status', 'submitted'); // Somente publica os que já foram submetidos/corrigidos
+        .in('status', ['submitted', 'late']); // Somente publica os que já foram submetidos (no prazo ou atrasados)
         
       return { data, error: error?.message };
     } catch (err: any) {

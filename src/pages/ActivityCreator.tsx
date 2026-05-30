@@ -15,7 +15,7 @@ interface ActivityCreatorProps {
   subjects: Subject[];
   onBack: () => void;
   onNavigate: (section: string) => void;
-  onReload?: () => void;
+  onReload?: (subjectId?: string) => void;
   isDarkMode: boolean;
 }
 
@@ -138,7 +138,7 @@ export default function ActivityCreator({ currentUser, subjects, onBack, onNavig
       setFeedback({ type: 'error', msg: result.error });
     } else {
       setFeedback({ type: 'success', msg: 'Atividade criada com sucesso!' });
-      if (onReload) onReload();
+      if (onReload) onReload(subjectId);
       setTimeout(() => {
         onNavigate('activities');
       }, 1500);

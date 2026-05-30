@@ -308,6 +308,10 @@ export default function App() {
             studentStatus = 'Concluída';
           }
 
+          const cleanedQuestions = user.role === 'student' && studentStatus !== 'Concluída'
+            ? (a.questions || []).map(({ correctAnswer, ...q }: any) => q)
+            : a.questions || [];
+
           return {
             id: a.id,
             title: a.title,
@@ -317,7 +321,7 @@ export default function App() {
             instructions: a.instructions,
             deadlineDate: a.deadline_date,
             status: studentStatus as any,
-            questions: a.questions || [],
+            questions: cleanedQuestions,
             totalPoints: a.total_points,
             createdAt: a.created_at
           };
@@ -413,8 +417,10 @@ export default function App() {
             if (submission) {
               // Aluno já realizou a prova
               studentStatus = 'Concluída';
-              const finalScore = submission.final_score != null ? submission.final_score : (submission.auto_score || 0);
-              grade = finalScore.toFixed(1);
+              if (submission.status === 'graded') {
+                const finalScore = submission.final_score != null ? submission.final_score : (submission.auto_score || 0);
+                grade = finalScore.toFixed(1);
+              }
               submittedAt = submission.created_at;
             } else {
               // Aluno não realizou — verificar se a janela de acesso expirou
@@ -426,6 +432,10 @@ export default function App() {
               }
             }
           }
+
+          const cleanedQuestions = user.role === 'student' && studentStatus !== 'Concluída'
+            ? (e.questions || []).map(({ correctAnswer, ...q }: any) => q)
+            : e.questions || [];
 
           return {
             id: e.id,
@@ -440,12 +450,33 @@ export default function App() {
             deadlineDate: e.deadline_date,
             weight: String(e.weight),
             image: e.image,
-            questions: e.questions || [],
+            questions: cleanedQuestions,
             status: studentStatus as any,
             grade,
             submittedAt
           };
         }));
+      }
+
+      // 8. Fetch Lessons
+      const { data: lessonsData, error: lessonsError } = await supabase
+        .from('lessons')
+        .select('*')
+        .in('subject_id', subjectIds);
+        
+      if (lessonsError) console.error('[loadInstitutionData] Lessons error:', lessonsError);
+      if (lessonsData) {
+        setLessons(lessonsData.map(l => ({
+          id: l.id,
+          subjectId: l.subject_id,
+          subjectName: (subData ?? []).find(s => s.id === l.subject_id)?.name || 'Disciplina',
+          title: l.title,
+          description: l.description || '',
+          type: l.type as any,
+          url: l.url,
+          date: l.published_at ? new Date(l.published_at).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR'),
+          duration: l.duration || undefined
+        })));
       }
     }
   };
@@ -541,9 +572,12 @@ export default function App() {
     setGradingType(type);
   };
 
-  const handleReload = async () => {
+  const handleReload = async (createdSubjectId?: string) => {
     if (currentUser) {
       await loadInstitutionData(currentUser);
+      if (createdSubjectId) {
+        setSelectedAdminSubjectId(createdSubjectId);
+      }
     }
   };
 
@@ -772,7 +806,43 @@ export default function App() {
             lessons={userLessons}
             subjects={userSubjects}
             canCreate={isTeacher || isAdmin}
-            onAddLesson={(lesson) => setLessons((prev) => [lesson, ...prev])}
+            onAddLesson={async (lesson) => {
+              if (!currentUser) return;
+              const { data, error } = await supabase
+                .from('lessons')
+                .insert([{
+                  subject_id: lesson.subjectId,
+                  teacher_id: currentUser.id,
+                  title: lesson.title,
+                  description: lesson.description || null,
+                  type: lesson.type,
+                  url: lesson.url,
+                  duration: lesson.duration || null
+                }])
+                .select()
+                .single();
+
+              if (error) {
+                console.error('[AddLesson] Erro ao salvar aula:', error);
+                alert('Erro ao salvar aula no Supabase: ' + error.message);
+                return;
+              }
+
+              if (data) {
+                const savedLesson: Lesson = {
+                  id: data.id,
+                  subjectId: data.subject_id,
+                  subjectName: lesson.subjectName,
+                  title: data.title,
+                  description: data.description || '',
+                  type: data.type as any,
+                  url: data.url,
+                  date: data.published_at ? new Date(data.published_at).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR'),
+                  duration: data.duration || undefined
+                };
+                setLessons((prev) => [savedLesson, ...prev]);
+              }
+            }}
             selectedAdminSubjectId={isAdmin || isTeacher ? selectedAdminSubjectId : undefined}
             setSelectedAdminSubjectId={isAdmin || isTeacher ? setSelectedAdminSubjectId : undefined}
             isDarkMode={isDarkMode}

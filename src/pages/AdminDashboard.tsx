@@ -181,7 +181,7 @@ export default function AdminDashboard({
       return;
     }
 
-    if (user && tempPassword) {
+    if (user) {
       const classSubjects = subjects.filter(s => s.classId === selectedClassId);
       
       if (classSubjects.length > 0) {
@@ -204,7 +204,7 @@ export default function AdminDashboard({
         subjectIds: classSubjects.map(s => s.id), status: 'ativo', joinedAt: new Date().toISOString(),
         classId: selectedClassId
       }]);
-      setModalFeedback({ type: 'success', msg: `Matriculado com sucesso! A senha provisória dele é:`, data: tempPassword });
+      setModalFeedback({ type: 'success', msg: `Matriculado com sucesso! A senha provisória dele é:`, data: tempPassword || studentPassword });
     } else if (error) {
       setModalFeedback({ type: 'error', msg: error });
     }

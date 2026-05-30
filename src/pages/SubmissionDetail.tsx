@@ -18,6 +18,8 @@ export default function SubmissionDetail({ activity, isExam, submissionId, onBac
   const [loading, setLoading] = useState(true);
   const [editedScore, setEditedScore] = useState<number>(0);
   const [feedback, setFeedback] = useState<string>('');
+  const [questionFeedback, setQuestionFeedback] = useState<Record<string, string>>({});
+  const [questionScores, setQuestionScores] = useState<Record<string, number>>({});
   const [saving, setSaving] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
@@ -28,44 +30,48 @@ export default function SubmissionDetail({ activity, isExam, submissionId, onBac
     setTimeout(() => setToastMsg(null), 3500);
   }, []);
 
+  const calcSingleQuestionAutoScore = useCallback((q: any, userAnswer: any): number => {
+    if (q.type === 'multiple_choice') {
+      const correctAnswers = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer];
+      const userAnswers = Array.isArray(userAnswer) ? userAnswer : [userAnswer].filter(Boolean);
+      if (correctAnswers.length > 0) {
+        const pointsPerCorrect = q.points / correctAnswers.length;
+        let qScore = 0;
+        let hasWrongAnswer = false;
+        userAnswers.forEach((ua: string) => {
+          if (correctAnswers.includes(ua)) {
+            qScore += pointsPerCorrect;
+          } else {
+            hasWrongAnswer = true;
+          }
+        });
+        if (userAnswers.length > correctAnswers.length || hasWrongAnswer) {
+          qScore = 0;
+        }
+        return Math.min(qScore, q.points);
+      }
+    } else if (q.type === 'true_false') {
+      const correct =
+        q.correctAnswer === true || q.correctAnswer === 'true'
+          ? true
+          : q.correctAnswer === false || q.correctAnswer === 'false'
+          ? false
+          : q.correctAnswer;
+      if (userAnswer === correct) return q.points;
+    }
+    return 0;
+  }, []);
+
   // Calcula auto-score baseado no gabarito
   const calcAutoScore = useCallback(
     (answers: Record<string, any>): number => {
       let score = 0;
       activity.questions.forEach((q) => {
-        const userAnswer = answers[q.id];
-        if (q.type === 'multiple_choice') {
-          const correctAnswers = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer];
-          const userAnswers = Array.isArray(userAnswer) ? userAnswer : [userAnswer].filter(Boolean);
-          if (correctAnswers.length > 0) {
-            const pointsPerCorrect = q.points / correctAnswers.length;
-            let qScore = 0;
-            let hasWrongAnswer = false;
-            userAnswers.forEach((ua: string) => {
-              if (correctAnswers.includes(ua)) {
-                qScore += pointsPerCorrect;
-              } else {
-                hasWrongAnswer = true;
-              }
-            });
-            if (userAnswers.length > correctAnswers.length || hasWrongAnswer) {
-              qScore = 0;
-            }
-            score += Math.min(qScore, q.points);
-          }
-        } else if (q.type === 'true_false') {
-          const correct =
-            q.correctAnswer === true || q.correctAnswer === 'true'
-              ? true
-              : q.correctAnswer === false || q.correctAnswer === 'false'
-              ? false
-              : q.correctAnswer;
-          if (userAnswer === correct) score += q.points;
-        }
+        score += calcSingleQuestionAutoScore(q, answers[q.id]);
       });
       return Math.round(score * 100) / 100;
     },
-    [activity.questions]
+    [activity.questions, calcSingleQuestionAutoScore]
   );
 
   const fetchSubmission = useCallback(async () => {
@@ -79,6 +85,37 @@ export default function SubmissionDetail({ activity, isExam, submissionId, onBac
 
     if (data) {
       setSubmission(data);
+      
+      const feedbackMap: Record<string, string> = {};
+      const scoreMap: Record<string, number> = {};
+      
+      if (data.question_feedback) {
+        Object.entries(data.question_feedback).forEach(([qId, val]: [string, any]) => {
+          if (val && typeof val === 'object' && !Array.isArray(val)) {
+            feedbackMap[qId] = val.feedback || '';
+            if (val.score !== undefined) {
+              scoreMap[qId] = Number(val.score);
+            }
+          } else {
+            feedbackMap[qId] = String(val || '');
+          }
+        });
+        setQuestionFeedback(feedbackMap);
+      }
+
+      // Initialize questionScores
+      const initialScores: Record<string, number> = {};
+      activity.questions.forEach((q) => {
+        if (scoreMap[q.id] !== undefined) {
+          initialScores[q.id] = scoreMap[q.id];
+        } else if (q.type === 'multiple_choice' || q.type === 'true_false') {
+          initialScores[q.id] = calcSingleQuestionAutoScore(q, data.answers?.[q.id]);
+        } else {
+          initialScores[q.id] = 0;
+        }
+      });
+      setQuestionScores(initialScores);
+
       // Usa final_score se existir; senão calcula auto_score baseado no gabarito
       if (data.final_score != null) {
         setEditedScore(Number(data.final_score));
@@ -86,26 +123,55 @@ export default function SubmissionDetail({ activity, isExam, submissionId, onBac
         const computed = calcAutoScore(data.answers || {});
         setEditedScore(computed);
       }
-      if (isExam && data.teacher_feedback) {
+      if (data.teacher_feedback) {
         setFeedback(data.teacher_feedback);
       }
     }
     setLoading(false);
-  }, [submissionId, isExam, calcAutoScore]);
+  }, [submissionId, isExam, calcAutoScore, calcSingleQuestionAutoScore, activity.questions]);
 
   useEffect(() => {
     fetchSubmission();
   }, [fetchSubmission]);
 
+  const handleQuestionScoreChange = (qId: string, valStr: string, maxPoints: number) => {
+    let val = valStr === '' ? NaN : Number(valStr);
+    if (!isNaN(val)) {
+      val = Math.min(Math.max(val, 0), maxPoints);
+    }
+    const updated = { ...questionScores, [qId]: val };
+    setQuestionScores(updated);
+    
+    // Auto-calcula a nota final total no topo (ignora NaNs no somatório temporariamente para digitação fluida)
+    const total = activity.questions.reduce((acc, q) => {
+      const qVal = updated[q.id];
+      return acc + (isNaN(qVal) ? 0 : qVal);
+    }, 0);
+    setEditedScore(Math.round(total * 100) / 100);
+  };
+
   const handleSave = async () => {
     setSaving(true);
-    const finalScoreToSave = Math.min(Math.max(editedScore, 0), activity.totalPoints);
+    const scoreVal = isNaN(editedScore) ? 0 : editedScore;
+    const finalScoreToSave = Math.min(Math.max(scoreVal, 0), activity.totalPoints);
+    
+    // Combina texto do feedback e nota de cada questão para salvar no JSONB
+    const combinedQuestionFeedback: Record<string, any> = {};
+    activity.questions.forEach((q) => {
+      const qScore = questionScores[q.id];
+      combinedQuestionFeedback[q.id] = {
+        feedback: questionFeedback[q.id] || '',
+        score: isNaN(qScore) ? 0 : qScore
+      };
+    });
+
     const res = await adminService.gradeSubmission(
       submissionId,
       isExam ? 'exam' : 'activity',
       finalScoreToSave,
-      'graded',
-      feedback
+      submission.status,
+      feedback,
+      combinedQuestionFeedback
     );
     if (res.error) {
       showToast('Erro ao salvar correção: ' + res.error, 'error');
@@ -231,8 +297,11 @@ export default function SubmissionDetail({ activity, isExam, submissionId, onBac
               step="0.1"
               min={0}
               max={activity.totalPoints}
-              value={editedScore}
-              onChange={(e) => setEditedScore(Number(e.target.value))}
+              value={isNaN(editedScore) ? '' : editedScore}
+              onChange={(e) => {
+                const val = e.target.value;
+                setEditedScore(val === '' ? NaN : Number(val));
+              }}
               className={`w-24 border rounded-xl py-2 px-4 text-2xl font-extrabold focus:outline-none focus:border-orange-500/50 text-center ${
                 isDarkMode ? 'bg-black/20 border-[var(--border)] text-orange-500' : 'bg-slate-100 border-zinc-200 text-orange-600'
               }`}
@@ -355,29 +424,62 @@ export default function SubmissionDetail({ activity, isExam, submissionId, onBac
                   Questão dissertativa — avaliação manual pelo professor.
                 </p>
               )}
+
+              {/* Nota e Feedback por questão */}
+              <div className="mt-4 pt-4 border-t border-[var(--border)] space-y-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Nota da Questão:</span>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      step="0.1"
+                      min={0}
+                      max={q.points}
+                      value={questionScores[q.id] !== undefined ? (isNaN(questionScores[q.id]) ? '' : questionScores[q.id]) : ''}
+                      onChange={(e) => handleQuestionScoreChange(q.id, e.target.value, q.points)}
+                      className={`w-16 border rounded-lg py-1 px-2 text-xs font-bold text-center focus:outline-none focus:border-orange-500/50 ${
+                        isDarkMode ? 'bg-black/20 border-white/5 text-orange-500' : 'bg-slate-50 border-zinc-200 text-zinc-900'
+                      }`}
+                    />
+                    <span className="text-xs font-bold text-[var(--text-muted)]">/ {q.points.toFixed(1)} pts</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider block">
+                    Observações / Feedback da Questão
+                  </label>
+                  <textarea
+                    value={questionFeedback[q.id] || ''}
+                    onChange={(e) => setQuestionFeedback(prev => ({ ...prev, [q.id]: e.target.value }))}
+                    placeholder="Escreva observações específicas para esta questão..."
+                    className={`w-full h-16 border rounded-xl py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 transition-all text-xs font-medium resize-none ${
+                      isDarkMode ? 'bg-black/20 border-white/5 text-white' : 'bg-slate-50 border-zinc-200 text-zinc-900'
+                    }`}
+                  />
+                </div>
+              </div>
             </motion.div>
           );
         })}
       </div>
 
       {/* ========== FEEDBACK DO PROFESSOR ========== */}
-      {isExam && (
-        <div className={`border rounded-3xl p-6 md:p-8 mt-8 transition-all duration-300 ${
-          isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200/80 shadow-md shadow-zinc-150/30'
-        }`}>
-          <label className="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest mb-4 block">
-            Feedback Geral / Comentários
-          </label>
-          <textarea
-            value={feedback}
-            onChange={(e) => setFeedback(e.target.value)}
-            placeholder="Deixe um comentário sobre o desempenho na prova..."
-            className={`w-full border rounded-2xl py-4 px-6 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 transition-all text-sm font-medium min-h-[120px] resize-none ${
-              isDarkMode ? 'glass border-white/5 text-white' : 'bg-slate-50 border-zinc-200 text-zinc-900'
-            }`}
-          />
-        </div>
-      )}
+      <div className={`border rounded-3xl p-6 md:p-8 mt-8 transition-all duration-300 ${
+        isDarkMode ? 'glass border-[var(--border)]' : 'bg-white border-zinc-200/80 shadow-md shadow-zinc-150/30'
+      }`}>
+        <label className="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest mb-4 block">
+          Feedback Geral / Comentários
+        </label>
+        <textarea
+          value={feedback}
+          onChange={(e) => setFeedback(e.target.value)}
+          placeholder={`Deixe um comentário sobre o desempenho na ${isExam ? 'prova' : 'atividade'}...`}
+          className={`w-full border rounded-2xl py-4 px-6 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 transition-all text-sm font-medium min-h-[120px] resize-none ${
+            isDarkMode ? 'glass border-white/5 text-white' : 'bg-slate-50 border-zinc-200 text-zinc-900'
+          }`}
+        />
+      </div>
 
       {/* ========== RODAPÉ DE AÇÕES ========== */}
       <div className="flex justify-end pt-6">
