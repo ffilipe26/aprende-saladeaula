@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, CheckCircle2, AlertCircle, Eye, Check, Clock, Users, BarChart2, X } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, AlertCircle, Eye, Check, Clock, Users, BarChart2, X, CheckSquare, Square } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { adminService } from '../lib/adminService';
 import { Activity, AuthUser } from '../types';
@@ -35,6 +35,7 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
   const [publishing, setPublishing] = useState(false);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
@@ -83,12 +84,35 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
     fetchSubmissions();
   }, [fetchSubmissions]);
 
-  const handlePublishAll = async () => {
+  const handlePublishSelected = async () => {
+    if (selectedIds.size === 0) return;
     setPublishing(true);
-    await adminService.publishGrades(activity.id, isExam ? 'exam' : 'activity');
+    await adminService.publishGradesByIds(Array.from(selectedIds), isExam ? 'exam' : 'activity');
+    setSelectedIds(new Set());
     await fetchSubmissions();
     setPublishing(false);
-    showToast('Notas publicadas com sucesso! Todos os alunos foram notificados.');
+    showToast(`${selectedIds.size} nota${selectedIds.size !== 1 ? 's' : ''} publicada${selectedIds.size !== 1 ? 's' : ''} com sucesso!`);
+  };
+
+
+  const toggleSelectAll = () => {
+    if (allSelectableSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(selectableRows.map((r) => r.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   };
 
   // Cruzamento: todos os alunos vs submissões
@@ -125,6 +149,10 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
 
   const allRows = buildCombinedRows();
 
+  // Submissões elegíveis para seleção: tem nota final e ainda não foi publicada
+  const selectableRows = allRows.filter((r) => r.final_score !== null && r.status !== 'graded' && r.type === 'submission');
+  const allSelectableSelected = selectableRows.length > 0 && selectableRows.every((r) => selectedIds.has(r.id));
+
   const filteredRows = allRows.filter((row) => {
     if (filterStatus === 'all') return true;
     if (filterStatus === 'absent') return row.status === 'absent';
@@ -139,7 +167,6 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
   const submittedCount = submissions.length;
   const gradedCount = submissions.filter((s) => s.status === 'graded' || s.final_score !== null).length;
   const pendingCount = submissions.filter((s) => s.status !== 'graded' && s.final_score === null).length;
-  const publishableCount = submissions.filter((s) => s.final_score !== null && s.status !== 'graded').length;
   const scoredSubmissions = submissions.filter((s) => s.final_score != null || s.auto_score != null);
   const avgScore =
     scoredSubmissions.length > 0
@@ -204,11 +231,11 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={handlePublishAll}
-          disabled={publishing || publishableCount === 0}
+          onClick={handlePublishSelected}
+          disabled={publishing || selectedIds.size === 0}
           className="sidebar-grad text-white px-8 py-4 rounded-2xl font-extrabold shadow-xl shadow-orange-600/20 transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
         >
-          {publishing ? 'Publicando...' : `Publicar ${publishableCount} Nota${publishableCount !== 1 ? 's' : ''} (Lote)`}
+          {publishing ? 'Publicando...' : `Publicar ${selectedIds.size} Nota${selectedIds.size !== 1 ? 's' : ''} (Lote)`}
           <Check size={18} />
         </motion.button>
       </motion.div>
@@ -303,35 +330,73 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
               <tr className={`border-b transition-colors duration-300 ${
                 isDarkMode ? 'border-white/5 bg-black/20' : 'border-zinc-200 bg-slate-50'
               }`}>
-                <th className="px-8 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest">Aluno</th>
-                <th className="px-8 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest text-center">Status</th>
-                <th className="px-8 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest text-center">Nota (Auto/Total)</th>
-                <th className="px-8 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest text-center">Data Entrega</th>
-                <th className="px-8 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest text-right">Ação</th>
+                {/* ===== CHECKBOX SELECIONAR TODAS ===== */}
+                <th className="pl-6 pr-2 py-6 w-12">
+                  {selectableRows.length > 0 && (
+                    <button
+                      onClick={toggleSelectAll}
+                      className={`p-1 rounded-lg transition-all cursor-pointer ${
+                        allSelectableSelected
+                          ? 'text-orange-500'
+                          : 'text-[var(--text-muted)] hover:text-orange-500'
+                      }`}
+                      title={allSelectableSelected ? 'Desmarcar todas' : 'Selecionar todas'}
+                    >
+                      {allSelectableSelected ? <CheckSquare size={18} /> : <Square size={18} />}
+                    </button>
+                  )}
+                </th>
+                <th className="px-6 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest">Aluno</th>
+                <th className="px-6 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest text-center">Status</th>
+                <th className="px-6 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest text-center">Nota (Auto/Total)</th>
+                <th className="px-6 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest text-center">Data Entrega</th>
+                <th className="px-6 py-6 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest text-right">Ação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-8 py-12 text-center text-[var(--text-muted)]">
+                  <td colSpan={6} className="px-8 py-12 text-center text-[var(--text-muted)]">
                     Carregando entregas...
                   </td>
                 </tr>
               ) : filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-8 py-12 text-center text-[var(--text-muted)]">
+                  <td colSpan={6} className="px-8 py-12 text-center text-[var(--text-muted)]">
                     Nenhum resultado para este filtro.
                   </td>
                 </tr>
               ) : (
-                filteredRows.map((row) => (
+                filteredRows.map((row) => {
+                  const isSelectable = row.final_score !== null && row.status !== 'graded' && row.type === 'submission';
+                  const isSelected = selectedIds.has(row.id);
+                  return (
                   <tr
                     key={row.id}
                     className={`transition-colors group ${row.status === 'absent' ? 'opacity-70' : ''} ${
+                      isSelected ? (isDarkMode ? 'bg-orange-500/5' : 'bg-orange-50/60') : ''
+                    } ${
                       isDarkMode ? 'hover:bg-white/5' : 'hover:bg-zinc-50'
                     }`}
                   >
-                    <td className="px-8 py-6">
+                    {/* ===== CHECKBOX DE SELEÇÃO ===== */}
+                    <td className="pl-6 pr-2 py-6 w-12">
+                      {isSelectable ? (
+                        <button
+                          onClick={() => toggleSelect(row.id)}
+                          className={`p-1 rounded-lg transition-all cursor-pointer ${
+                            isSelected
+                              ? 'text-orange-500'
+                              : 'text-[var(--text-muted)] hover:text-orange-500'
+                          }`}
+                        >
+                          {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
+                        </button>
+                      ) : (
+                        <span className="block w-[18px]" />
+                      )}
+                    </td>
+                    <td className="px-6 py-6">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${
                           row.status === 'absent' ? 'bg-zinc-500/10 text-zinc-500' : 'bg-orange-500/10 text-orange-500'
@@ -367,7 +432,7 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
                         </span>
                       )}
                     </td>
-                    <td className="px-8 py-6 text-center">
+                    <td className="px-6 py-6 text-center">
                       {row.status === 'absent' ? (
                         <span className="text-[var(--text-muted)] font-bold">—</span>
                       ) : (
@@ -381,10 +446,10 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
                         </span>
                       )}
                     </td>
-                    <td className="px-8 py-6 text-center text-sm font-medium text-[var(--text-muted)]">
+                    <td className="px-6 py-6 text-center text-sm font-medium text-[var(--text-muted)]">
                       {row.created_at ? new Date(row.created_at).toLocaleString('pt-BR') : '—'}
                     </td>
-                    <td className="px-8 py-6 text-right">
+                    <td className="px-6 py-6 text-right">
                       {row.type === 'submission' ? (
                         <button
                           onClick={() => onGradeSubmission(row.submission.id)}
@@ -399,7 +464,8 @@ export default function Submissions({ activity, isExam, currentUser, onBack, onG
                       )}
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>

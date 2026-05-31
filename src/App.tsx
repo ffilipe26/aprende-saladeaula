@@ -451,6 +451,7 @@ export default function App() {
             weight: String(e.weight),
             image: e.image,
             questions: cleanedQuestions,
+            totalPoints: e.total_points || (e.questions ? e.questions.reduce((acc: number, q: any) => acc + (q.points || 0), 0) : 10),
             status: studentStatus as any,
             grade,
             submittedAt

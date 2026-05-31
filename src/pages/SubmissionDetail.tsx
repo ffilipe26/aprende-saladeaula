@@ -14,6 +14,8 @@ interface SubmissionDetailProps {
 }
 
 export default function SubmissionDetail({ activity, isExam, submissionId, onBack, isDarkMode }: SubmissionDetailProps) {
+  // Fallback seguro: calcula totalPoints a partir das questões caso não venha mapeado
+  const totalPoints = activity.totalPoints || activity.questions?.reduce((acc: number, q: any) => acc + (q.points || 0), 0) || 10;
   const [submission, setSubmission] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editedScore, setEditedScore] = useState<number>(0);
@@ -153,7 +155,7 @@ export default function SubmissionDetail({ activity, isExam, submissionId, onBac
   const handleSave = async () => {
     setSaving(true);
     const scoreVal = isNaN(editedScore) ? 0 : editedScore;
-    const finalScoreToSave = Math.min(Math.max(scoreVal, 0), activity.totalPoints);
+    const finalScoreToSave = Math.min(Math.max(scoreVal, 0), totalPoints);
     
     // Combina texto do feedback e nota de cada questão para salvar no JSONB
     const combinedQuestionFeedback: Record<string, any> = {};
@@ -296,7 +298,7 @@ export default function SubmissionDetail({ activity, isExam, submissionId, onBac
               type="number"
               step="0.1"
               min={0}
-              max={activity.totalPoints}
+              max={totalPoints}
               value={isNaN(editedScore) ? '' : editedScore}
               onChange={(e) => {
                 const val = e.target.value;
@@ -306,7 +308,7 @@ export default function SubmissionDetail({ activity, isExam, submissionId, onBac
                 isDarkMode ? 'bg-black/20 border-[var(--border)] text-orange-500' : 'bg-slate-100 border-zinc-200 text-orange-600'
               }`}
             />
-            <span className="text-lg font-bold text-[var(--text-muted)]">/ {activity.totalPoints} pts</span>
+            <span className="text-lg font-bold text-[var(--text-muted)]">/ {totalPoints} pts</span>
           </div>
           <p className="text-[10px] text-[var(--text-muted)] mt-2">
             Auto-calculado:{' '}

@@ -336,5 +336,21 @@ export const adminService = {
     } catch (err: any) {
       return { data: null, error: err.message || 'Erro ao publicar notas' };
     }
+  },
+
+  // Publica notas para submissões específicas selecionadas pelo professor
+  async publishGradesByIds(submissionIds: string[], type: 'activity' | 'exam') {
+    try {
+      const table = type === 'activity' ? 'activity_submissions' : 'exam_submissions';
+
+      const { data, error } = await supabase
+        .from(table)
+        .update({ status: 'graded' })
+        .in('id', submissionIds);
+
+      return { data, error: error?.message };
+    } catch (err: any) {
+      return { data: null, error: err.message || 'Erro ao publicar notas' };
+    }
   }
 };
