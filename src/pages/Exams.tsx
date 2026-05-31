@@ -161,7 +161,7 @@ const Exams = ({
     calcCountdowns();
     const interval = setInterval(calcCountdowns, 1000);
     return () => clearInterval(interval);
-  }, [availableExams, scheduledExams]);
+  }, [exams, selectedAdminSubjectId]);
 
   const container = {
     hidden: { opacity: 0 },

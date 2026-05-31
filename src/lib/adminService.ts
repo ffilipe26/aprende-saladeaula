@@ -330,7 +330,7 @@ export const adminService = {
         .from(table)
         .update({ status: 'graded' })
         .eq(idField, activityId)
-        .in('status', ['submitted', 'late']); // Somente publica os que já foram submetidos (no prazo ou atrasados)
+        .in('status', ['submitted', 'late']); // Publica tanto submissões normais quanto entregues em atraso / auto-submetidas
         
       return { data, error: error?.message };
     } catch (err: any) {

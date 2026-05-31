@@ -339,11 +339,18 @@ export default function App() {
       // Fetch exam submissions if student
       let myExamSubmissions: any[] = [];
       if (user.role === 'student') {
-        const { data: examSubmData } = await supabase
+        console.log('[loadInstitutionData] Fetching exam submissions for student ID:', user.id);
+        const { data: examSubmData, error: examSubmError } = await supabase
           .from('exam_submissions')
-          .select('exam_id, status, final_score, auto_score, created_at')
+          .select('*') // Seleciona todas as colunas de forma resiliente para evitar erro de coluna inexistente
           .eq('student_id', user.id);
-        if (examSubmData) myExamSubmissions = examSubmData;
+        
+        if (examSubmError) {
+          console.error('[loadInstitutionData] Error fetching exam submissions from Supabase:', examSubmError);
+        } else if (examSubmData) {
+          myExamSubmissions = examSubmData;
+          console.log('[loadInstitutionData] Student exam submissions successfully fetched:', examSubmData);
+        }
       }
 
       if (examData) {
@@ -394,7 +401,7 @@ export default function App() {
                   answers,
                   auto_score: autoScore,
                   status: 'late' // Auto-submit após prazo = sempre late
-                }]).select('exam_id, status, final_score, auto_score, created_at').single();
+                }]).select('*').single();
                 
                 // Adicionar à lista local para o mapeamento de status funcionar
                 if (autoSubData) myExamSubmissions = [...myExamSubmissions, autoSubData];
@@ -421,7 +428,7 @@ export default function App() {
                 const finalScore = submission.final_score != null ? submission.final_score : (submission.auto_score || 0);
                 grade = finalScore.toFixed(1);
               }
-              submittedAt = submission.created_at;
+              submittedAt = submission.submitted_at || submission.created_at || submission.graded_at || new Date().toISOString();
             } else {
               // Aluno não realizou — verificar se a janela de acesso expirou
               const now = new Date();
