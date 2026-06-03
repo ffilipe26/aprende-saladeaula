@@ -96,38 +96,65 @@ export default function App() {
   }, []);
 
   // ==========================================
-  // RECUPERAÇÃO DE SESSÃO (F5)
+  // RECUPERAÇÃO DE SESSÃO (F5) E EXPIRAÇÃO
   // ==========================================
   useEffect(() => {
-    // 1. Tenta pegar a sessão ativa do Supabase
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        // Se tem sessão, busca os dados da tabela 'users'
-        const { data: userData } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+    const checkSessionExpiry = async () => {
+      const SESSION_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24 horas
+      const lastActive = localStorage.getItem('last_active_time');
+      const now = Date.now();
 
-        if (userData) {
-          const authUser: AuthUser = {
-            id: userData.id,
-            name: userData.name,
-            email: userData.email,
-            role: userData.role as any,
-            institutionId: userData.institution_id
-          };
-
-          if (userData.must_change_password) {
-            setCurrentUser(authUser);
-            setIsChangingPassword(true);
-          } else {
-            // Re-executa o login final para puxar os dados de Turmas e Disciplinas
-            finalizeLogin(authUser, false);
+      if (lastActive) {
+        const timeDiff = now - parseInt(lastActive, 10);
+        if (timeDiff > SESSION_TIMEOUT_MS) {
+          console.log('[Auth] Sessão expirou por inatividade.');
+          try {
+            await supabase.auth.signOut();
+          } catch (e) {
+            console.error('[Auth] Erro ao deslogar sessão expirada:', e);
+          } finally {
+            localStorage.removeItem('last_active_time');
+            setCurrentUser(null);
+            setPublicScreen('landing');
+            return;
           }
         }
       }
-    });
+
+      // Se passou da verificação de expiração, tenta recuperar a sessão
+      supabase.auth.getSession().then(async ({ data: { session } }) => {
+        if (session?.user) {
+          // Atualiza o tempo de atividade se a sessão estiver ativa
+          localStorage.setItem('last_active_time', String(Date.now()));
+
+          const { data: userData } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (userData) {
+            const authUser: AuthUser = {
+              id: userData.id,
+              name: userData.name,
+              email: userData.email,
+              role: userData.role as any,
+              institutionId: userData.institution_id
+            };
+
+            if (userData.must_change_password) {
+              setCurrentUser(authUser);
+              setIsChangingPassword(true);
+            } else {
+              // Re-executa o login final para puxar os dados de Turmas e Disciplinas
+              finalizeLogin(authUser, false);
+            }
+          }
+        }
+      });
+    };
+
+    checkSessionExpiry();
 
     // 2. Escuta mudanças na autenticação (opcional, para lidar com logout em outra aba)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -494,6 +521,7 @@ export default function App() {
     setCurrentUser(user);
     setPublicScreen('landing');
     setActiveSection('dashboard');
+    localStorage.setItem('last_active_time', String(Date.now()));
 
     if (!isDemoMode) {
       // MODO REAL: Limpa todos os dados Mocks da tela para começar zerado e busca dados reais
@@ -524,12 +552,18 @@ export default function App() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setCurrentUser(null);
-    setPublicScreen('landing');
-    setShowLogoutModal(false);
-    setActiveSection('dashboard');
-    setNotifications([]);
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Erro ao efetuar signOut no Supabase:', err);
+    } finally {
+      localStorage.removeItem('last_active_time');
+      setCurrentUser(null);
+      setPublicScreen('landing');
+      setShowLogoutModal(false);
+      setActiveSection('dashboard');
+      setNotifications([]);
+    }
   };
 
   // ==========================================
@@ -1015,6 +1049,7 @@ export default function App() {
           activeSection={activeSection}
           setActiveSection={(section) => {
             setActiveSection(section);
+            localStorage.setItem('last_active_time', String(Date.now()));
             setSelectedActivity(null);
             setSelectedExam(null);
             setSelectedActivityForGrading(null);

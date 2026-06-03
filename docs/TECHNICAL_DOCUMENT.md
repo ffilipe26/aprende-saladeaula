@@ -314,33 +314,50 @@ loadInstitutionData()                   [busca turmas, disciplinas, atividades]
 Renderiza dashboard correto
 ```
 
-### Recuperação de Sessão (F5 / Reload)
+### Recuperação de Sessão (F5 / Reload) e Expiração por Inatividade
 
-O `App.tsx` usa `useEffect` para verificar a sessão existente do Supabase ao iniciar:
+O `App.tsx` usa `useEffect` de inicialização para verificar se a sessão foi expirada por inatividade antes de restaurar o estado:
+
+1. **Verificação de Expiração**: O sistema checa se a diferença entre o tempo atual e o timestamp `last_active_time` (armazenado no `localStorage`) ultrapassa **24 horas**. Se ultrapassar, a sessão é encerrada (`supabase.auth.signOut()`) e o usuário é redirecionado para a tela de login.
+2. **Recuperação de Sessão**: Caso o período de inatividade seja menor que 24 horas, o sistema tenta obter a sessão ativa do Supabase. Se bem-sucedido, o timestamp de atividade é atualizado e o estado do usuário é restaurado automaticamente.
 
 ```typescript
-supabase.auth.getSession().then(async ({ data: { session } }) => {
-  if (session?.user) {
-    // Busca o perfil e restaura o estado
-    finalizeLogin(authUser, false);
-  }
-});
+const lastActive = localStorage.getItem('last_active_time');
+const now = Date.now();
+if (lastActive && (now - parseInt(lastActive, 10) > 24 * 60 * 60 * 1000)) {
+  await supabase.auth.signOut();
+  localStorage.removeItem('last_active_time');
+  setCurrentUser(null);
+  setPublicScreen('landing');
+} else {
+  supabase.auth.getSession().then(...);
+}
 ```
 
-Isso garante que ao recarregar a página, o usuário não precisa logar novamente — a sessão é mantida de forma segura pelo Supabase.
+Isso garante o equilíbrio ideal (estilo Teams): manter a sessão aberta caso o navegador seja fechado e reaberto rapidamente, mas deslogar o usuário de forma segura se passar um dia inteiro inativo.
 
 ### Logout
 
+Para evitar que o usuário fique "preso" no painel em caso de erros de rede ao chamar a API do Supabase, a função de logout é protegida com uma estrutura robusta:
+
 ```typescript
 const handleLogout = async () => {
-  await supabase.auth.signOut();  // Destrói o token na nuvem e localmente
-  setCurrentUser(null);
-  setPublicScreen('landing');
-  // ...reset de estado
+  try {
+    await supabase.auth.signOut();  // Destrói o token na nuvem e localmente
+  } catch (err) {
+    console.error('Erro ao efetuar signOut no Supabase:', err);
+  } finally {
+    localStorage.removeItem('last_active_time'); // Limpa registro de inatividade
+    setCurrentUser(null);
+    setPublicScreen('landing');
+    setShowLogoutModal(false);
+    setActiveSection('dashboard');
+    setNotifications([]);
+  }
 };
 ```
 
-> ✅ **Segurança:** O `signOut()` é chamado **antes** de limpar o estado React. Isso garante que o token JWT seja invalidado no Supabase antes de qualquer limpeza visual.
+> ✅ **Segurança e Robustez:** A limpeza dos dados no `localStorage` e a redefinição de estado do React (`currentUser = null`) ocorrem dentro do bloco `finally`. Isso garante que o usuário de fato saia da conta visualmente e sua sessão expire localmente, independente de falhas ou timeouts de rede na chamada da API do Supabase.
 
 ### Troca Obrigatória de Senha
 
