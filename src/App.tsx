@@ -31,6 +31,7 @@ import {
 } from './constants';
 import ConfirmationModal from './components/ui/ConfirmationModal';
 import { supabase } from './lib/supabase';
+import { adminService } from './lib/adminService';
 
 type PublicScreen = 'landing' | 'login' | 'register' | 'onboarding';
 
@@ -850,23 +851,19 @@ export default function App() {
             canCreate={isTeacher || isAdmin}
             onAddLesson={async (lesson) => {
               if (!currentUser) return;
-              const { data, error } = await supabase
-                .from('lessons')
-                .insert([{
-                  subject_id: lesson.subjectId,
-                  teacher_id: currentUser.id,
-                  title: lesson.title,
-                  description: lesson.description || null,
-                  type: lesson.type,
-                  url: lesson.url,
-                  duration: lesson.duration || null
-                }])
-                .select()
-                .single();
+              const { data, error } = await adminService.createLesson({
+                subjectId: lesson.subjectId,
+                teacherId: currentUser.id,
+                title: lesson.title,
+                description: lesson.description,
+                type: lesson.type,
+                url: lesson.url,
+                duration: lesson.duration
+              });
 
               if (error) {
                 console.error('[AddLesson] Erro ao salvar aula:', error);
-                alert('Erro ao salvar aula no Supabase: ' + error.message);
+                alert('Erro ao salvar aula no Supabase: ' + error);
                 return;
               }
 
@@ -874,7 +871,7 @@ export default function App() {
                 const savedLesson: Lesson = {
                   id: data.id,
                   subjectId: data.subject_id,
-                  subjectName: lesson.subjectName,
+                  subjectName: subjects.find(s => s.id === data.subject_id)?.name || 'Disciplina',
                   title: data.title,
                   description: data.description || '',
                   type: data.type as any,
@@ -883,7 +880,26 @@ export default function App() {
                   duration: data.duration || undefined
                 };
                 setLessons((prev) => [savedLesson, ...prev]);
+                addNotification(
+                  'Nova Aula Publicada!',
+                  `A aula "${lesson.title}" foi adicionada.`,
+                  'system'
+                );
               }
+            }}
+            onDeleteLesson={async (lessonId) => {
+              const { error } = await adminService.deleteLesson(lessonId);
+              if (error) {
+                console.error('[DeleteLesson] Erro ao excluir aula:', error);
+                alert('Erro ao excluir aula: ' + error);
+                return;
+              }
+              setLessons((prev) => prev.filter((l) => l.id !== lessonId));
+              addNotification(
+                'Aula Excluída',
+                'A aula foi removida com sucesso.',
+                'system'
+              );
             }}
             selectedAdminSubjectId={isAdmin || isTeacher ? selectedAdminSubjectId : undefined}
             setSelectedAdminSubjectId={isAdmin || isTeacher ? setSelectedAdminSubjectId : undefined}

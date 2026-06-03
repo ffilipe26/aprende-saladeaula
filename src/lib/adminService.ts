@@ -352,5 +352,52 @@ export const adminService = {
     } catch (err: any) {
       return { data: null, error: err.message || 'Erro ao publicar notas' };
     }
+  },
+
+  // ==========================================
+  // AULAS E CONTEÚDOS
+  // ==========================================
+
+  async createLesson(lesson: {
+    subjectId: string;
+    teacherId: string;
+    title: string;
+    description?: string;
+    type: 'youtube' | 'video' | 'pdf';
+    url: string;
+    duration?: string;
+  }) {
+    try {
+      const { data, error } = await supabase
+        .from('lessons')
+        .insert([{
+          subject_id: lesson.subjectId,
+          teacher_id: lesson.teacherId,
+          title: lesson.title,
+          description: lesson.description || null,
+          type: lesson.type,
+          url: lesson.url,
+          duration: lesson.duration || null
+        }])
+        .select()
+        .single();
+
+      return { data, error: error?.message };
+    } catch (err: any) {
+      return { data: null, error: err.message || 'Erro inesperado ao criar aula' };
+    }
+  },
+
+  async deleteLesson(lessonId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('lessons')
+        .delete()
+        .eq('id', lessonId);
+
+      return { data, error: error?.message };
+    } catch (err: any) {
+      return { data: null, error: err.message || 'Erro ao excluir aula' };
+    }
   }
 };

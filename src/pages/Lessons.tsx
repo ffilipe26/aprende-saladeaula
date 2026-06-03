@@ -11,10 +11,12 @@ import {
   AlertTriangle,
   PlayCircle,
   FileText,
-  ChevronDown
+  ChevronDown,
+  Trash2
 } from 'lucide-react';
 import Header from '../components/layout/Header';
 import LessonForm from '../components/forms/LessonForm';
+import ConfirmationModal from '../components/ui/ConfirmationModal';
 import { Lesson, Subject, Notification } from '../types';
 
 interface LessonsProps {
@@ -22,6 +24,7 @@ interface LessonsProps {
   subjects: Subject[];
   canCreate: boolean;
   onAddLesson: (lesson: Lesson) => void;
+  onDeleteLesson: (lessonId: string) => void;
   userName: string;
   notifications: Notification[];
   onRemoveNotification: (id: string) => void;
@@ -44,6 +47,7 @@ export default function Lessons({
   subjects,
   canCreate,
   onAddLesson,
+  onDeleteLesson,
   userName,
   notifications,
   onRemoveNotification,
@@ -56,6 +60,7 @@ export default function Lessons({
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [activePlaybackLesson, setActivePlaybackLesson] = useState<Lesson | null>(null);
+  const [lessonToDelete, setLessonToDelete] = useState<string | null>(null);
 
   const isAdminView = setSelectedAdminSubjectId !== undefined;
 
@@ -282,9 +287,20 @@ export default function Lessons({
                         <span className="text-[9px] font-extrabold bg-orange-500/10 text-orange-500 px-2.5 py-0.5 rounded uppercase tracking-wider border border-orange-500/10">
                           {sub ? sub.code : 'Matéria'}
                         </span>
-                        <span className="text-[9px] font-extrabold uppercase tracking-widest text-[var(--text-muted)]">
-                          {lesson.type === 'youtube' ? 'YouTube Embed' : lesson.type === 'video' ? 'Vídeo MP4' : 'Slides / PDF'}
-                        </span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[9px] font-extrabold uppercase tracking-widest text-[var(--text-muted)]">
+                            {lesson.type === 'youtube' ? 'YouTube Embed' : lesson.type === 'video' ? 'Vídeo MP4' : 'Slides / PDF'}
+                          </span>
+                          {canCreate && (
+                            <button
+                              onClick={() => setLessonToDelete(lesson.id)}
+                              className="p-1.5 text-zinc-400 hover:text-red-500 rounded-lg hover:bg-red-500/10 transition-colors cursor-pointer"
+                              title="Excluir aula"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {/* Título e Descrição */}
@@ -408,6 +424,22 @@ export default function Lessons({
           </div>
         )}
       </AnimatePresence>
+
+      {/* Modal de Exclusão de Aula */}
+      <ConfirmationModal
+        isOpen={lessonToDelete !== null}
+        onClose={() => setLessonToDelete(null)}
+        onConfirm={() => {
+          if (lessonToDelete) {
+            onDeleteLesson(lessonToDelete);
+          }
+        }}
+        title="Excluir Aula"
+        message="Tem certeza que deseja excluir esta aula? Esta ação não poderá ser desfeita."
+        confirmText="Sim, excluir"
+        cancelText="Não, voltar"
+        variant="danger"
+      />
     </div>
   );
 }
