@@ -1,6 +1,6 @@
 # 📋 Planejamento — Fase E: Aulas, Notificações e Segurança
 
-> **Status:** 🔲 Planejado
+> **Status:** ⚠️ Parcialmente Concluído (E.1 finalizado, E.2 pendente)
 > **Dependências:** Fases D.3, D.4 e D.5
 
 ---
@@ -14,7 +14,7 @@ Atualmente, as aulas criadas pelo professor via `LessonForm.tsx` são salvas **a
 ### O Que Precisa Ser Feito
 
 #### Backend
-- [ ] Confirmar que a tabela `public.lessons` está criada com as colunas corretas:
+- [x] Confirmar que a tabela `public.lessons` está criada com as colunas corretas:
   ```sql
   CREATE TABLE lessons (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -28,22 +28,22 @@ Atualmente, as aulas criadas pelo professor via `LessonForm.tsx` são salvas **a
       published_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
   );
   ```
-- [ ] Adicionar `adminService.createLesson()`:
+- [x] Adicionar `adminService.createLesson()`:
   ```typescript
   async createLesson({ subjectId, teacherId, title, description, type, url, duration })
   ```
-- [ ] Adicionar `adminService.deleteLesson()`.
+- [x] Adicionar `adminService.deleteLesson()`.
 
 #### Frontend
-- [ ] **Atualizar** `src/components/forms/LessonForm.tsx`
+- [x] **Atualizar** `src/components/forms/LessonForm.tsx`
   - Ao salvar, chamar `adminService.createLesson()` em vez de apenas chamar `onAddLesson` local.
   - Tratar loading e erros.
 
-- [ ] **Atualizar** `src/App.tsx — loadInstitutionData()`
+- [x] **Atualizar** `src/App.tsx — loadInstitutionData()`
   - Adicionar busca das aulas: `FROM lessons WHERE subject_id IN (...)`.
   - Popular o state `lessons`.
 
-- [ ] **Atualizar** `src/pages/Lessons.tsx`
+- [x] **Atualizar** `src/pages/Lessons.tsx`
   - Adicionar botão de deletar aula (para professor e admin).
   - Atualizar o estado ao deletar.
 

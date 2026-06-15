@@ -19,15 +19,17 @@
 | Landing Page premium com efeito aurora boreal | ✅ Funcionando |
 | Painéis separados: Admin, Professor e Aluno | ✅ Funcionando |
 | Edge Functions seguras (Service Role protegida) | ✅ Funcionando |
+| Persistência e Exclusão de Aulas (Fase 1.1) | ✅ Concluído |
 
 ---
 
 ## 🔴 FASE 1 — Correções Críticas e Polimento
 > Gaps que afetam o uso real hoje. Prioridade máxima antes de qualquer nova feature.
 
-### 1.1 — Persistência de Aulas no Banco de Dados
-- **Problema:** Aulas criadas somem ao recarregar a página (só existem no estado React).
-- **Solução:** Criar tabela `lessons` no Supabase. Adicionar `createLesson()` e `fetchLessons()` em `adminService.ts`.
+### 1.1 — Persistência e Deleção de Aulas — ✅ Concluído
+- **Problema:** Aulas criadas sumiam ao recarregar a página (só existiam no estado React) e não havia interface ou endpoint para excluir aulas.
+- **Solução:** Criada persistência completa conectando a tabela `lessons` ao `adminService.createLesson()`. Implementado `adminService.deleteLesson()` e adicionado botão de lixeira seguro nos cards com `ConfirmationModal` em `Lessons.tsx`.
+- **Status:** Concluído com sucesso.
 - **Impacto:** 🔴 Alto — professores perdem todo o conteúdo ao recarregar.
 
 ### 1.2 — CalendarView: Dados Reais de Prazos

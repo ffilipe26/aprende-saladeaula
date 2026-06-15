@@ -1,7 +1,7 @@
 # 📚 Aprende+ — Documentação Técnica Completa
 
-> **Versão:** 1.3.0 (Etapa D.3 concluída)
-> **Última atualização:** Maio de 2026
+> **Versão:** 1.4.0 (Arquitetura de Segurança - Edge Functions)
+> **Última atualização:** 15 de Junho de 2026
 > **Mantenedores:** Equipe Aprende+
 
 ---
@@ -73,14 +73,14 @@ Criar um ecossistema educacional completo, moderno e premium que conecta:
 
 ### Supabase
 
-O projeto usa **dois clientes** do Supabase com escopos diferentes:
+O projeto utiliza uma arquitetura de segurança moderna, separando operações regulares de operações privilegiadas:
 
-| Cliente | Arquivo | Chave usada | Propósito |
+| Método | Execução | Chave usada | Propósito |
 |---------|---------|-------------|-----------|
-| `supabase` | `src/lib/supabase.ts` | `VITE_SUPABASE_ANON_KEY` | Login do usuário final, operações regulares |
-| `adminSupabase` | `src/lib/adminSupabase.ts` | `VITE_SUPABASE_SERVICE_ROLE_KEY` | Criação de usuários, operações administrativas que bypassam RLS |
+| Cliente `supabase` | Frontend (`src/lib/supabase.ts`) | `VITE_SUPABASE_ANON_KEY` | Autenticação, navegação e operações limitadas pelo RLS (Row Level Security) |
+| Edge Functions | Backend (Deno) | `SUPABASE_SERVICE_ROLE_KEY` | Criação de usuários, exclusão e ações que requerem privilégios elevados. A chave não fica exposta no frontend. |
 
-> ⚠️ **Atenção de Segurança:** A `SERVICE_ROLE_KEY` está atualmente no frontend para fins de MVP/desenvolvimento. Em produção, ela **deve** ser movida para um servidor backend (ex: Supabase Edge Functions, Next.js API Routes) para evitar exposição no cliente.
+> ✅ **Segurança:** O projeto removeu completamente a Service Role Key do frontend, migrando as funções de administração para Edge Functions do Supabase, garantindo que o cliente não tenha acesso direto para bypassar RLS.
 
 ---
 
@@ -103,11 +103,10 @@ aprende+gravity/
 │   ├── constants.ts              # Dados mockados para o Modo Demo
 │   ├── index.css                 # Design System global (variáveis CSS, glassmorphism)
 │   │
-│   ├── lib/                      # Camada de serviços / API
-│   │   ├── supabase.ts           # Cliente Supabase anônimo (usuário logado)
-│   │   ├── adminSupabase.ts      # Cliente Supabase com Service Role (admin)
-│   │   ├── auth.ts               # authService — login, logout, recuperação de sessão
-│   │   └── adminService.ts       # adminService — criação de usuários, atividades, submissões
+│   ├── lib/                      # Camada de serviços
+│   │   ├── auth.ts               # Funções de login/logout
+│   │   ├── adminService.ts       # Serviços administrativos (chama Edge Functions e RLS)
+│   │   ├── activityService.ts    # Lógica de atividades e provas
 │   │
 │   ├── pages/                    # Páginas principais (uma por rota/seção)
 │   │   ├── LandingPage.tsx       # Tela inicial pública
@@ -286,7 +285,7 @@ Tabela pivot que faz a relação N:N entre alunos e disciplinas.
 RLS está habilitado em todas as tabelas. As políticas garantem:
 - **Alunos:** Só visualizam atividades de disciplinas em que estão matriculados.
 - **Professores:** Só visualizam/gerenciam atividades e submissões das suas disciplinas.
-- **Admin/Service Role:** Acesso total via `adminSupabase` (bypassa RLS).
+- **Admin/Edge Functions:** Acesso total via invocações no servidor (bypassa RLS com segurança).
 
 ---
 
@@ -628,8 +627,13 @@ questions.forEach(q => {
 
 | Método | Parâmetros | Retorno | Descrição |
 |--------|-----------|---------|-----------|
-| `createInstitutionAndAdmin({...})` | schoolName, adminEmail... | `{ user, error }` | Cria instituição + super admin |
-| `createUser({...})` | name, email, role, institutionId... | `{ user, error, tempPassword }` | Cria professor ou aluno |
+| `createInstitutionAndAdmin({...})` | schoolName, adminEmail... | `{ user, error }` | Cria instituição + super admin (via Edge Functions) |
+| `createUser({...})` | name, email, role, institutionId... | `{ user, error, tempPassword }` | Cria professor ou aluno (via Edge Functions) |
+
+### `src/lib/activityService.ts` — `activityService`
+
+| Método | Parâmetros | Retorno | Descrição |
+|--------|-----------|---------|-----------|
 | `createActivity({...})` | subjectId, teacherId, title, questions... | `{ data, error }` | Cria atividade no banco |
 | `submitActivity({...})` | activityId, studentId, answers, score... | `{ data, error }` | Registra submissão do aluno |
 
@@ -745,7 +749,6 @@ Crie um arquivo `.env` na raiz do projeto:
 ```env
 VITE_SUPABASE_URL=https://seu-projeto.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGci...
-VITE_SUPABASE_SERVICE_ROLE_KEY=eyJhbGci...
 ```
 
 > ⚠️ **JAMAIS** commite o arquivo `.env` no repositório. Adicione ao `.gitignore`.
@@ -838,19 +841,17 @@ Após criar o projeto no Supabase:
 
 ## 17. Problemas Conhecidos e Decisões Técnicas
 
-### Service Role no Frontend
+### 17.1 Exposição da Service Role Key (RESOLVIDO)
 
-**Problema:** A `VITE_SUPABASE_SERVICE_ROLE_KEY` está exposta no cliente Vite (prefixo `VITE_`), o que significa que qualquer usuário pode inspecionar o bundle e encontrá-la.
+**Status:** ✅ Resolvido
 
-**Situação atual:** Aceitável para MVP e ambiente de desenvolvimento/apresentação.
+No passado, a `VITE_SUPABASE_SERVICE_ROLE_KEY` ficava exposta no cliente. Isso foi **completamente resolvido**. As operações de administração foram migradas para Supabase Edge Functions, e a chave de Service Role foi removida do frontend.
 
-**Solução para produção:** Mover todas as operações que usam `adminSupabase` para Supabase Edge Functions ou um servidor backend (BFF), onde a Service Role Key nunca seja exposta ao cliente.
-
-### Exames não Persistidos no Banco
+### 17.2 Exames não Persistidos no Banco
 
 Os `Exams` (provas) ainda usam armazenamento local. Ao dar F5, as provas criadas pelo modal `ExamForm.tsx` são perdidas. A próxima etapa do roadmap (Fase D.4) endereçará isso com um fluxo similar ao que foi feito para Atividades.
 
-### Status Mapping (activities)
+### 17.3 Status Mapping (activities)
 
 O banco usa `status IN ('draft', 'published')` enquanto o frontend usa `'Pendente'` e `'Concluída'`. Isso é tratado com um mapeamento explícito em `loadInstitutionData()`:
 
@@ -858,9 +859,9 @@ O banco usa `status IN ('draft', 'published')` enquanto o frontend usa `'Pendent
 let studentStatus = a.status === 'published' ? 'Pendente' : a.status;
 ```
 
-### RLS Policies
+### 17.4 Evolução das Políticas de RLS
 
-As policies de RLS ainda precisam ser configuradas de forma completa. Atualmente, o acesso é feito principalmente via `adminSupabase` (Service Role) que bypassa o RLS. As policies detalhadas para cada role serão configuradas em uma etapa futura.
+O sistema passou de operações totalmente baseadas em Service Role para um modelo baseado em Row Level Security (RLS). Ainda existem algumas policies para refinar, mas a arquitetura já não depende de clientes privilegiados no frontend.
 
 ---
 
